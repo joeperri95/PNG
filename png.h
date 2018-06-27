@@ -1,7 +1,17 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+
+#define BFINAL 1
+#define BTYPE 6
+#define NO_COMPRESSION 0
+#define FIXED_HUFFMAN 1
+#define DYNAMIC_HUFFMAN 2
+#define RESERVED_ERROR 3
+
 
 //contains metadata from header only
 //Additional metadata from nonessential chunks will be read elsewhere
@@ -13,31 +23,26 @@ typedef struct{
 	uint8_t compression_method;
 	uint8_t filter_method;
 	uint8_t interlace_method;
+	bool error;
 } pngMetaData;
 
-typedef struct{
-	pngMetaData metaData;
-	
-	unsigned char* dataBuffer;
-	uint32_t dataLength;
-	
-} png;
+unsigned char* getFilePointer(const char* filename);
 
 //given a file check if the PNG signature is correct
-bool validatePNG(FILE *fp);
+bool validatePNG(unsigned char **buff);
 
-PNGMetaData processHeader(char *chunkData);
+pngMetaData processHeader(unsigned char **buff);
 
 //read the 4 bytes for chunk length
-uint32_t getChunkLength(FILE *fp);
+uint32_t getChunkLength(unsigned char **buff);
 
-void getChunkType(FILE *fp,char *str);
+void getChunkType(unsigned char **buff,char *str);
 
 //store chunk data in the buffer
-void getChunkData(FILE *fp, uint32_t chunkLength,char *chunkData);
+void getChunkData(unsigned char **buff, uint32_t chunkLength,char *chunkData);
 
 //detemine what to return
-uint32_t getCRC(FILE *fp);
+uint32_t getCRC(unsigned char *buff);
 
 //determine how to validate
 //look up CRC algorithm
