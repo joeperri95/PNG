@@ -5,8 +5,8 @@
 #include <string.h>
 #include <inttypes.h>
 
-#define BFINAL 1
-#define BTYPE 6
+#define BFINAL 0x01
+#define BTYPE 0x06
 #define NO_COMPRESSION 0
 #define FIXED_HUFFMAN 1
 #define DYNAMIC_HUFFMAN 2
