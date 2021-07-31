@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include "logging.h"
 
 typedef struct {
 	uint32_t length;
@@ -12,7 +13,6 @@ typedef struct {
 	uint8_t *buffer;
 	uint8_t bit_offset;    
 } bitstream_t;
-
 
 void create_bitstream(bitstream_t *bits, uint8_t *data, uint32_t length);
 void delete_bitstream(bitstream_t *bits);

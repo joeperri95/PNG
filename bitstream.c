@@ -18,12 +18,16 @@ void delete_bitstream(bitstream_t *bits)
 
 uint8_t read_bits(bitstream_t *bits, int N)
 {
-
+    
     uint16_t mask = 0x0000;
     uint16_t endbit = bits->bit_offset + N;
     uint8_t data = *(bits->buffer + bits->byte_offset);
     uint8_t ret = 0;
 
+
+    if(N == 0){
+        return 0;
+    }
 
     // construct mask
     mask = ((0x01 << endbit) - 1) - ((0x01 << bits->bit_offset) - 1);    
@@ -72,7 +76,7 @@ uint8_t read_bits(bitstream_t *bits, int N)
 
     }
 
-    
+    LOG(10, "bits read %d\n", bits->bit_offset + bits->byte_offset * 8);
     return ret;
 
 }

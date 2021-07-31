@@ -6,7 +6,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
-#include <stdio.h>
+#include "logging.h"
+#include "bitstream.h"
 
 typedef struct _node
 {
@@ -15,8 +16,8 @@ typedef struct _node
     struct _node *right;
 } node;
 
-// node *constructHuffman();
-// void freeHuffman(node *tree);
+node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits);
+void freeHuffman(node *tree);
 
 node *createNode();
 void freeNode(node *node);
@@ -24,6 +25,9 @@ void freeNode(node *node);
 void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data);
 uint32_t searchCode(node *tree, uint32_t code, uint32_t length);
 
+// create pr/in/post order traversal with function pointer strategy
 void traverse(node *tree);
+
+uint32_t search(bitstream_t *b, node *tree);
 
 #endif

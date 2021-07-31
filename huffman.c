@@ -3,7 +3,7 @@
 node *createNode()
 {
 
-    node *newNode =  malloc(sizeof(node)); 
+    node *newNode =(node *)  malloc(sizeof(node)); 
     
     newNode->data = 0xFFFFFFFF;
     newNode->left = NULL;
@@ -36,7 +36,7 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
 
    if(length > 100)
    {       
-       printf("code %d data %d length %d NOPE\n",code, data, length);
+       LOG(ERROR, "code %d data %d length %d LENGTH CODE TOO LONG\n",code, data, length);
        return;
    }
 
@@ -98,9 +98,11 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
             currentNode->left = createNode(); 
             currentNode = currentNode->left;
             currentNode->data = data;
+            
         }
         else
         {
+            LOG(ERROR, "Node is already inserted\n");
             // Node is already inserted
         }
     }
@@ -116,13 +118,14 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
         }
         else
         {
+            LOG(ERROR, "Node is already inserted\n");
             // Node is already inserted
         }
     }    
 
     str[length + 1] = '\0';
 
-    printf("%s code %d data %d length %d \n", str,  code ,data, length);        
+    LOG(DEBUG_2, "%s code %d data %d length %d \n", str,  code ,currentNode->data, length);        
 }
 
 uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
@@ -144,7 +147,7 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
         
         if (currentNode == NULL)
         {
-            //printf("node not found\n");
+            // printf("node not found\n");
             return 0xFFFFFFFF;
         }
     }
@@ -152,7 +155,7 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
     if( currentNode->data == 0xFFFFFFFF) 
     {
         // Not a leaf node
-        //printf("not a leaf node\n");
+        // printf("not a leaf node\n");
         return 0xFFFFFFFF; 
     }
 
@@ -178,7 +181,84 @@ void traverse(node *tree)
     traverse((*tree).right);
     
     depth--;
-    if(tree->data != 255)
-        printf("depth %d value %d\n",depth, (*tree).data);
     
+    if(tree->data != 0xFFFFFFFF)
+        LOG(DEBUG, "depth %d value %d\n",depth, (*tree).data);
 }
+
+
+node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
+{
+
+    node *huffman_tree = createNode();
+
+#define MAX_HUFFMAN_SIZE 100
+    uint32_t depths[MAX_HUFFMAN_SIZE];
+    uint32_t next_codes[MAX_HUFFMAN_SIZE];
+    
+    memset(depths, 0, max_bits * sizeof(uint32_t));
+    memset(next_codes, 0, max_bits * sizeof(uint32_t));
+
+    for (int i = 0; i < length; i++)
+    {
+        if(codes[i] != -1)
+            depths[codes[i]]++;
+    }
+
+    depths[0] = 0;
+    int code = 0;
+
+    for (int bits = 1; bits < max_bits; bits++)
+    {
+            code = (code + depths[bits - 1]) << 1;
+            next_codes[bits] = code;
+    }
+
+    int left = 1;
+
+    for (int len = 1; len < max_bits; len++) {
+        left <<= 1;                     
+        left -= depths[len];          
+        if (left < 0)
+            LOG(ERROR, "%d OH NO!!!\n", len);
+    }
+
+    for (int n = 0; n < length; n++)
+    {
+        int len = codes[n];
+        if (len != 0 && len != -1)
+        {
+            insertCode(huffman_tree, next_codes[len], len, n);
+            next_codes[len]++;
+        }
+    }
+    return huffman_tree;
+}
+
+void freeHuffman(node *tree)
+{
+    // not implemented
+}
+
+
+uint32_t search(bitstream_t *b, node *tree)
+{
+    uint32_t runlen = 1;
+    uint32_t lencode = read_bits(b, 1);
+    uint32_t newcode = searchCode(tree, lencode, runlen);
+    
+    while (newcode == 0xFFFFFFFF && runlen < 16)
+    {
+            runlen++;
+            uint32_t len_buffer = read_bits(b, 1);
+            lencode = (lencode << 0x01) + len_buffer;
+            newcode = searchCode(tree, lencode , runlen);
+            //printNbits(lencode, runlen);
+    }
+
+    LOG(DEBUG_2, "length: %d val: %d code %d\n", runlen, newcode, lencode);
+   // printNbits(lencode, runlen);
+
+    return newcode;
+}
+
