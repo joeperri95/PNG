@@ -1,9 +1,10 @@
 #ifndef __LOGGING_H__
 #define __LOGGING_H__
 
-// comment this line out to turn off logging completely
-#define LOGGING 1
 #include <stdio.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -26,14 +27,12 @@
 // This is where you set the log level
 #define LOGGING_LEVEL INFO 
 
+
+#define LOGGING_ENABLED true 
+
 // TODO turn this into a real library with timestamps, file logging and ANSI color codes
 
-#ifdef LOGGING
+void LOG(uint8_t level, const char* message, ...);
 
-    #define LOG(level, ...) if((level) <= LOGGING_LEVEL ) { printf( __VA_ARGS__); }
-
-#else
-    #define LOG 
-#endif
 
 #endif

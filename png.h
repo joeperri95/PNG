@@ -13,8 +13,8 @@
 #define DYNAMIC_HUFFMAN 2
 #define RESERVED_ERROR 3
 
-//contains metadata from header only
-//Additional metadata from nonessential chunks will be read elsewhere
+// Contains metadata from header only
+// Additional metadata from nonessential chunks will be read elsewhere
 typedef struct _pngMetaData{
 	uint32_t width;
 	uint32_t height;
@@ -27,23 +27,23 @@ typedef struct _pngMetaData{
 
 void readFileToBuffer(const char* filename, unsigned char **buf);
 
-//given a file check if the PNG signature is correct
+// Given a file check if the PNG signature is correct
 bool validatePNG(FILE *fp);
 
-//read the IHDR chunk and store metadata
+// Read the IHDR chunk and store metadata
 pngMetaData processHeader(unsigned char *buff);
 
-//read the 4 bytes for chunk length
+// Read the 4 bytes for chunk length
 uint32_t getChunkLength(unsigned char *buff);
 
+// Read the 4 bytes corresponding to chunk type
 void getChunkType(unsigned char *buff,char *str);
 
-//store chunk data in the buffer
+// Store chunk data in the buffer
 void getChunkData(unsigned char *buff, uint32_t chunkLength, unsigned char *chunkData);
 
-//detemine what to return
+// Read the 4 bytes corresponding to the chunk CRC 
 uint32_t getCRC(unsigned char *buff);
 
-//determine how to validate
-//look up CRC algorithm
+// UNIMPLEMENTED. Perform CRC on chunk and compare with read value
 bool validateCRC(uint32_t CRC);

@@ -103,9 +103,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         sorted[codedict[i]] = codes[i];
     }
 
-
     node *huffmantree = constructHuffman(sorted, 19, 8);
-    traverse(huffmantree); 
 
     uint32_t code;    
     uint8_t extra = 0;
@@ -200,8 +198,8 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
     }
 
     free(z_codes);
-    free(len_huffman);
-    free(len_distance);
-    free(huffmantree);
+    freeHuffman(len_huffman);
+    freeHuffman(len_distance);
+    freeHuffman(huffmantree);
 
 }

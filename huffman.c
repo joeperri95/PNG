@@ -163,30 +163,6 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
     return currentNode->data;
 }
 
-void traverse(node *tree)
-{
-    // dump the contents of the huffman tree
-    // used for debugging
-
-    static int depth = 0;    
-    depth++;
-    
-    if(tree == NULL)
-    {         
-        depth--;       
-        return;
-    }
-    
-    traverse((*tree).left);
-    traverse((*tree).right);
-    
-    depth--;
-    
-    if(tree->data != 0xFFFFFFFF)
-        LOG(DEBUG, "depth %d value %d\n",depth, (*tree).data);
-}
-
-
 node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
 {
 
@@ -238,6 +214,7 @@ node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
 void freeHuffman(node *tree)
 {
     // not implemented
+    traverse_postorder(tree, freeNode);
 }
 
 
@@ -262,3 +239,65 @@ uint32_t search(bitstream_t *b, node *tree)
     return newcode;
 }
 
+void traverse_preorder(node *tree, strategy func)
+{
+
+    // dump the contents of the huffman tree
+    // used for debugging
+
+    static int depth = 0;    
+    depth++;
+    
+    if(tree == NULL)
+    {         
+        depth--;       
+        return;
+    }
+
+    func(tree);
+    traverse_preorder((*tree).left, func);
+    traverse_preorder((*tree).right, func);
+    
+    depth--;
+
+}
+
+void traverse_inorder(node *tree, strategy func)
+{
+
+    static int depth = 0;    
+    depth++;
+    
+    if(tree == NULL)
+    {         
+        depth--;       
+        return;
+    }
+    
+    traverse_inorder((*tree).left, func);
+    func(tree);
+    traverse_inorder((*tree).right, func);
+    
+    depth--;
+    
+}
+
+void traverse_postorder(node *tree, strategy func)
+{
+
+    static int depth = 0;    
+    depth++;
+    
+    if(tree == NULL)
+    {         
+        depth--;       
+        return;
+    }
+    
+    traverse_postorder((*tree).left, func);
+    traverse_postorder((*tree).right, func);
+    
+    depth--;
+
+    func(tree);
+}

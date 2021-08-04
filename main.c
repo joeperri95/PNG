@@ -70,6 +70,7 @@ int main(int argc, char **argv)
 		printf("CRC: %u\n", getCRC(pngBuffer + offset));
 		offset += 4;
 	}
+
 	printf("datalength %d\n", dataLength);    
 
 	//zlib section
@@ -78,12 +79,12 @@ int main(int argc, char **argv)
 	// won't currently work for everything
 	// one byte filter type prepended to every line
 
-    uint32_t uncompressed_size = (pngData.width + 1) * pngData.height * 8;
+        uint32_t uncompressed_size = (pngData.width + 1) * pngData.height * 8;
 	uint8_t *outputStream = malloc(uncompressed_size * sizeof(uint8_t));
 	uint32_t outputLength = 0;
 
 	bool z_quit = false;
-    uint8_t z_final = 0; 
+        uint8_t z_final = 0; 
 	bitstream_t b;
 	create_bitstream(&b, dataStream, dataLength);
 
@@ -96,6 +97,9 @@ int main(int argc, char **argv)
 	fwrite(outputStream, 1, uncompressed_size,  ofp);
 
 	fclose(ofp);
+
+        // inflate is complete now need to undo the filter operations
+
 
 	free(outputStream);
 	delete_bitstream(&b);
@@ -114,6 +118,7 @@ exit:
 }
 
 
+// some debugging utility functions
 void printNbits(uint32_t target, int N)
 {
 	// 32 bit max but can print a variable number

@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include "logging.h"
 
+// Bitstream object containing a data buffer and the current byte and bit offset
 typedef struct {
 	uint32_t length;
 	uint32_t byte_offset;
@@ -14,8 +15,13 @@ typedef struct {
 	uint8_t bit_offset;    
 } bitstream_t;
 
+// Create a bitstream using a buffer of a given size
 void create_bitstream(bitstream_t *bits, uint8_t *data, uint32_t length);
+
+// Free associated data
 void delete_bitstream(bitstream_t *bits);
+
+// Read up to 8 bits from the bitstream
 uint8_t read_bits(bitstream_t *bits, int N);
 
 #endif

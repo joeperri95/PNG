@@ -4,6 +4,7 @@
 #include "bitstream.h"
 #include "huffman.h"
 
+// Metadata included in the header of a zlib stream
 typedef struct _zlibMetaData
 {
 	uint8_t compression_method;
@@ -13,14 +14,23 @@ typedef struct _zlibMetaData
 	uint8_t flevel;
 } zlibMetaData;
 
-
+// Retrieve metadata from start of zlib stream 
 zlibMetaData z_processHeader(bitstream_t *input);
 
+// Read and process zlib streams until complete. Write decompressed data to outputStream
 void z_inflate(bitstream_t *input, unsigned char *outputStream);
+
+// Copy an uncompressed stream
 void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength);
+
+// Decompress a stream that was compressed using dynamic codes
 void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_t *outputLength);
+
+
+// UNIMPLEMENTED. Decompress a stream that was compressed using fixed codes
 void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength);
 
+// UNIMPLEMENTED. Compute ADLER32 checksum
 void z_ADLER32();
 
 #endif
