@@ -33,7 +33,7 @@ void readFileToBuffer(const char *filename, unsigned char **buf)
     }
     else
     {
-        printf("woah woah woah\n");
+       LOG(ERROR, "Could not open file\n"); 
     }
 
     fclose(fp);

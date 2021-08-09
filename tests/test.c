@@ -16,7 +16,8 @@ void main(int argc, char *argv)
     
     printf( "All bitstream tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
 
-    test huffman_suite[NUM_TESTS_HUFFMAN] = {test_create_node_data};
+    test huffman_suite[NUM_TESTS_HUFFMAN] = {test_create_node_data, test_create_node_left_null,
+    test_create_node_right_null, test_insert_left, test_insert_right, test_insert_empty};
 
     for(int i = 0; i < NUM_TESTS_HUFFMAN; i++)
     {
@@ -24,7 +25,6 @@ void main(int argc, char *argv)
     }
 
     printf( "All huffman tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
-
     printf( "All tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
 
     return 0;

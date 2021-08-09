@@ -26,9 +26,11 @@ void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *o
 // Decompress a stream that was compressed using dynamic codes
 void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_t *outputLength);
 
-
 // UNIMPLEMENTED. Decompress a stream that was compressed using fixed codes
 void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength);
+
+// Read the final 4 bytes in the bitstream
+uint32_t z_readADLER32(bitstream_t *input);
 
 // UNIMPLEMENTED. Compute ADLER32 checksum
 void z_ADLER32();

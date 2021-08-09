@@ -33,6 +33,10 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
          x   O  x   x x  x x   x 
     
     */
+   if(length == 0)
+   {
+       return;
+   }
 
    if(length > 100)
    {       
@@ -213,7 +217,6 @@ node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
 
 void freeHuffman(node *tree)
 {
-    // not implemented
     traverse_postorder(tree, freeNode);
 }
 

@@ -46,25 +46,115 @@ void z_inflate(bitstream_t *input, unsigned char *outputStream)
 
 void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength)
 {
-    // Not implemented
-    LOG(ERROR, "not yet implemented\n");
-    return;
-
-    input->bit_offset = 0;
-    input->byte_offset++;
+    
+    if(input->bit_offset != 0){ 
+        input->bit_offset = 0;
+        input->byte_offset++;
+    }
 
     uint32_t len = read_bits(input, 8);
     len = (len << 0x08) + read_bits(input, 8);
 
-    for(int i = 0; i < len + 2; i++)
+    int32_t nlen = read_bits(input, 8);
+    nlen = (nlen << 0x08) + read_bits(input, 8);
+    
+    printf("%d bytes %d\n", len, nlen);
+    for(int i = 0; i < len; i++)
     {
-        read_bits(input,8);
+        *(outputStream + (*outputLength)++) = read_bits(input,8);
     }
 }
 
 void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength)
 {
-    // Not implemented
+
+    const uint32_t literal_extra_bit_table[29]  =  {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
+    const uint32_t literal_offset_table[29]     =  {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
+    const uint32_t distance_extra_bit_table[30] =  {0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
+    const uint32_t distance_offset_table[30]    =  {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24557};
+
+    // construct fixed huffman tree
+    node *huffmanTree = createNode();     
+    uint16_t code = 0x30; 
+
+    for(int i = 0; i < 144; i++)
+    {
+        insertCode(huffmanTree, code, 8, i);
+        code++;
+    }
+
+    code = 0x190;
+    for(int i = 144; i < 256; i++)
+    {
+        insertCode(huffmanTree, code, 9, i);
+        code++;
+    }
+
+    code = 0x00;
+    for(int i = 256; i < 280; i++)
+    {
+        insertCode(huffmanTree, code, 7, i);
+        code++;
+    }
+
+    code = 0xC0;
+    for(int i = 280; i <= 287; i++)
+    {
+        insertCode(huffmanTree, code, 8, i);
+        code++;
+    }
+
+    // construct distance tree
+    node *distanceHuffman = createNode(); 
+
+    for(int i = 0; i < 32; i++)
+    {
+        insertCode(distanceHuffman, i, 5, i);
+    }
+
+    int newcode = 0;            
+
+    while (newcode != 256)
+    {		
+        newcode = search(input, huffmanTree);		                    
+        
+        printf("%d\n",*outputLength); 
+        if (newcode == -1)
+        {
+                LOG(ERROR,"lost the code \n");
+                return -1;
+        }
+        else if (newcode < 256)
+        {
+            outputStream[(*outputLength)++] = newcode;
+        }
+        else if (newcode > 256)
+        {
+            int btr = 0;
+            int check = 0;
+            uint32_t length, dlength = 0;
+            
+            int lcode = newcode - 257;
+            btr = literal_extra_bit_table[lcode];
+            length  = read_bits(input, btr);
+
+            LOG(DEBUG_3,"Copying %d\n", length + literal_offset_table[lcode]);
+            
+            int dist = search(input, distanceHuffman);
+            check = distance_extra_bit_table[dist]; 
+            dlength = read_bits(input, check);
+            
+            LOG(DEBUG_3,"Going back %d\n",  dlength + distance_offset_table[dist]);
+
+            int startingPos = *outputLength;
+            for(int i=0; i < length + literal_offset_table[lcode]; i++)
+            {
+                outputStream[(*outputLength)++] = outputStream[startingPos - (dlength + distance_offset_table[dist]) + i];
+            }        
+        }
+    }
+    freeHuffman(huffmanTree);
+    freeHuffman(distanceHuffman);
 }
 
 
@@ -202,4 +292,23 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
     freeHuffman(len_distance);
     freeHuffman(huffmantree);
 
+}
+
+uint32_t z_readADLER32(bitstream_t *input)
+{
+  	// read adler32
+	// adler32 on next byte boundary as per the man himself. 
+	// https://stackoverflow.com/questions/64814734/how-does-the-compressed-data-end-at-the-byte-boundary-in-zlib-data-format
+	
+	if(input->bit_offset != 0){
+		input->bit_offset = 0;
+		input->byte_offset++;
+	}
+
+    uint32_t adler = read_bits(input, 8);
+	adler = (adler << 0x08) +  read_bits(input, 8);
+	adler = (adler << 0x08) +  read_bits(input, 8);
+    adler = (adler << 0x08) +  read_bits(input, 8);	
+
+    return adler;
 }
