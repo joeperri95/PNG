@@ -4,25 +4,31 @@ EXE = png
 GUNZIP_EXE = gunzip
 TEST_EXE = test
 BUILDDIR = build
-CFLAGS =
+CFLAGS = -IlibInflate
 
-all: clean main.o libs 
-	$(CC) $(CFLAGS) main.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(EXE)
+all: png gunzip
+    @:
 
-gunzip: clean gunzip.o libs
-	$(CC) $(CFLAGS) gunzip.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(GUNZIP_EXE) 
+png: clean libs $(BUILDDIR)/main.o 
+	cd $(BUILDDIR) && $(CC) $(CFLAGS) main.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(EXE)
 
+gunzip: clean libs $(BUILDDIR)/gunzip.o
+	cd $(BUILDDIR) && $(CC) $(CFLAGS) gunzip.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(GUNZIP_EXE) 
 
 # just build all object files
-libs: clean png.o bitstream.o huffman.o inflate.o logging.o gzip.o
-	@:
+libs: clean 
+	cd libInflate && $(MAKE)
+	cd ..
 
 # build with debug flag
 debug: CFLAGS += -g
 debug: all
 	@:
 
-tests: clean test.o png.o bitstream.o huffman.o inflate.o logging.o test_png.o test_bitstream.o test_huffman.o test_inflate.o 
+tests: clean 
+	cd tests && $(MAKE)
+
+tests2: clean test.o png.o bitstream.o huffman.o inflate.o logging.o test_png.o test_bitstream.o test_huffman.o test_inflate.o 
 	$(CC) test.o inflate.o png.o bitstream.o huffman.o logging.o test_png.o test_bitstream.o test_huffman.o test_inflate.o -I. -Itests -o $(TEST_EXE)
 
 test.o: tests/test.c
@@ -40,31 +46,13 @@ test_huffman.o: tests/test_huffman.c
 test_inflate.o: tests/test_inflate.c	
 	$(CC) -c tests/test_inflate.c -o test_inflate.o -I. -Itests
 
-main.o: main.c
-	$(CC) main.c -c -o main.o -I. $(CFLAGS)
+$(BUILDDIR)/main.o: main.c
+	$(CC) main.c -c -o $(BUILDDIR)/main.o -I. $(CFLAGS)
 
-png.o: png.c
-	$(CC) png.c -c -o png.o -I. $(CFLAGS)
-
-inflate.o: inflate.c
-	$(CC) inflate.c -c -o inflate.o -I. $(CFLAGS)
-
-bitstream.o: bitstream.c
-	$(CC) bitstream.c -c -o bitstream.o -I. $(CFLAGS)
-
-huffman.o: huffman.c
-	$(CC) huffman.c -c -o huffman.o -I. $(CFLAGS)
-
-logging.o: logging.c
-	$(CC) logging.c -c -o logging.o -I. $(CFLAGS)
-
-gzip.o: gzip.c
-	$(CC) gzip.c -c -o gzip.o -I. $(CFLAGS)
-
-gunzip.o: gunzip.c
-	$(CC) gunzip.c -c -o gunzip.o -I. $(CFLAGS)
+$(BUILDDIR)/gunzip.o: gunzip.c
+	$(CC) gunzip.c -c -o $(BUILDDIR)/gunzip.o -I. $(CFLAGS)
 
 clean:
-	-@rm -f *.o $(EXE) $(GUNZIP_EXE) $(TEST_EXE)
+	cd $(BUILDDIR) && rm -f *.o $(EXE) $(GUNZIP_EXE) $(TEST_EXE)
 
 .PHONY: clean

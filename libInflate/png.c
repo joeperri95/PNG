@@ -15,7 +15,6 @@ void readFileToBuffer(const char *filename, unsigned char **buf)
             if(filesize == -1)
                 LOG(ERROR, "Could not determine filesize\n");
 
-            printf("filesize %d\n", filesize);
             fseek(fp, 0, SEEK_SET);
           
             // allocate memory

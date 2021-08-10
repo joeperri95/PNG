@@ -38,7 +38,7 @@ void z_inflate(bitstream_t *input, unsigned char *outputStream)
                     break;
                 default:
                     LOG(ERROR, "invalid compression type %d\n",z_compression_type);
-                    return 0;
+                    return; 
                     break;
             };
      }
@@ -122,7 +122,7 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
         if (newcode == -1)
         {
                 LOG(ERROR,"lost the code \n");
-                return -1;
+                return;
         }
         else if (newcode < 256)
         {
@@ -255,7 +255,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         if (newcode == -1)
         {
                 LOG(ERROR,"lost the code \n");
-                return -1;
+                return;
         }
         else if (newcode < 256)
         {
