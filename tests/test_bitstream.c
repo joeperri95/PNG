@@ -36,6 +36,16 @@ void test_create_bitstream_byte_offset()
     delete_bitstream(&bits);
 }
 
+void test_delete_bitstream()
+{
+
+    bitstream_t bits;
+    create_bitstream(&bits, data, TEST_DATA_LENGTH);
+    delete_bitstream(&bits);
+
+    assert(bits.buffer == NULL);
+}
+
 void test_read_bit()
 {
     bitstream_t bits;

@@ -1,12 +1,13 @@
 #include "test.h"
 #include "test_bitstream.h"
 #include "test_huffman.h"
+#include "test_png.h"
 
 void main(int argc, char *argv)
 {
 
     test bitstream_suite[NUM_TESTS_BITSTREAM] = {test_create_bitstream_length, test_create_bitstream_bit_offset,
-    test_create_bitstream_byte_offset, test_read_bit, test_read_byte, test_read_byte_rollover,
+    test_create_bitstream_byte_offset, test_delete_bitstream, test_read_bit, test_read_byte, test_read_byte_rollover,
     test_bit_offset_rollover, test_byte_offset_rollover};
     
     for(int i = 0; i < NUM_TESTS_BITSTREAM; i++)
@@ -25,6 +26,15 @@ void main(int argc, char *argv)
     }
 
     printf( "All huffman tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
+    
+    test png_suite[NUM_TESTS_PNG] = {test_SimpleCRC};
+    for(int i = 0; i < NUM_TESTS_PNG; i++)
+    {
+
+png_suite[i]();
+}
+
+    printf( "All png tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
     printf( "All tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
 
     return 0;

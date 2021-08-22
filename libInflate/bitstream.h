@@ -22,6 +22,9 @@ void create_bitstream(bitstream_t *bits, uint8_t *data, uint32_t length);
 void delete_bitstream(bitstream_t *bits);
 
 // Read up to 8 bits from the bitstream
-uint8_t read_bits(bitstream_t *bits, int N);
+uint8_t _read_bits(bitstream_t *bits, int N);
+
+// Read up to 64 bits
+uint64_t read_bits(bitstream_t *bits, int N);
 
 #endif

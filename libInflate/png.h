@@ -40,10 +40,12 @@ uint32_t getChunkLength(unsigned char *buff);
 void getChunkType(unsigned char *buff,char *str);
 
 // Store chunk data in the buffer
-void getChunkData(unsigned char *buff, uint32_t chunkLength, unsigned char *chunkData);
+void getChunkData(unsigned char *fileBuffer, uint32_t chunkLength, unsigned char *chunkData);
 
 // Read the 4 bytes corresponding to the chunk CRC 
 uint32_t getCRC(unsigned char *buff);
 
 // UNIMPLEMENTED. Perform CRC on chunk and compare with read value
-bool validateCRC(uint32_t CRC);
+bool validateCRC(unsigned char* buff, uint32_t length, uint32_t CRC);
+
+uint64_t CRC32(uint8_t *buffer, uint32_t len);

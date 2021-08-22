@@ -68,7 +68,11 @@ int main(int argc, char **argv)
 		}
 		offset += chunkLength;
 
-		printf("CRC: %u\n", getCRC(pngBuffer + offset));
+		uint64_t crc = getCRC(pngBuffer + offset);
+		printf("CRC: %u\n", crc);
+
+		if(validateCRC)
+
 		offset += 4;
 	}
 

@@ -14,9 +14,10 @@ void create_bitstream(bitstream_t *bits, uint8_t *data, uint32_t length)
 void delete_bitstream(bitstream_t *bits)
 {
     free(bits->buffer);
+    bits->buffer = NULL;
 }
 
-uint8_t read_bits(bitstream_t *bits, int N)
+uint8_t _read_bits(bitstream_t *bits, int N)
 {
     
     uint16_t mask = 0x0000;
@@ -81,3 +82,28 @@ uint8_t read_bits(bitstream_t *bits, int N)
 
 }
 
+uint64_t read_bits(bitstream_t *bits, int N)
+{
+
+    if(N > 64)
+    {
+        LOG(ERROR, "Can only read up to 64 bits\n");
+        return 0XFFFFFFFF;
+    }
+
+    int bits_left = N;
+    uint64_t ret = 0;
+
+    while(bits_left >= 8)
+    {
+        ret = ret << 0x08;
+        ret |= _read_bits(bits, 8);
+        
+        bits_left -= 8;
+    }
+
+    ret = ret << bits_left;
+    ret |= _read_bits(bits, bits_left);
+
+    return ret;
+}
