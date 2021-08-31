@@ -26,7 +26,7 @@
 
 // This is where you set the log level
 #define LOGGING_LEVEL INFO 
-
+//#define LOGGING_LEVEL DEBUG_ALL 
 
 #define LOGGING_ENABLED true 
 

@@ -1,25 +1,32 @@
 #include "test_png.h"
-#include "bitstream.h"
-#include <stdio.h>
-#include <assert.h>
 
-
-void make_crc_table(void)
+bool test_CRC32_IHDR()
 {
-        
+    #define MESSAGE_LEN 17
+    char message[MESSAGE_LEN] = {0x49, 0x48, 0x44, 0x52, 0x0, 0x0, 0x0, 0x80, 0x00, 0x00, 0x00, 0x44, 0x08, 0x02, 0x00, 0x00, 0x00};
+
+    uint32_t res = CRC32(message, MESSAGE_LEN);
+    
+    // known good crc
+    return assert(res == 0xc625aa3e);
 }
 
 
-
-
-
-void test_CRC32()
+bool test_CRC32()
 {
+    #define MESSAGE_LEN 9
+    char message[MESSAGE_LEN] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    
+    uint32_t res = CRC32(message, MESSAGE_LEN);
 
+    // known good crc
+    return assert(res == 0xcbf43926);
 }
 
-void test_SimpleCRC()
+bool test_SimpleCRC()
 {
+    // Check of understanding of CRC algorithm. CRC32 does not actually work this way
+
     uint64_t CRC_polynomial =  0x104C11DB7;
     //uint64_t CRC_polynomial =  0x10814141AB;
     uint32_t remainder = 0;
@@ -56,11 +63,28 @@ void test_SimpleCRC()
         }
                
         remainder = (dividend & 0xFFFFFFFF);            
-        printf("%d 0x%lx\n",index++,  remainder);
+        //printf("%d 0x%lx\n",index++,  remainder);
 
     }
 
     remainder = (dividend ^ 0xFFFFFFFF);              
 
     delete_bitstream(&bits);
+
+    return false;
 }
+
+static test test_list[] =
+{
+    {"test CRC32", test_CRC32},
+    {"test CRC32 on IHDR", test_CRC32_IHDR},
+    {"test Simple CRC algorithm", test_SimpleCRC},
+};
+
+extern test_suite png_suite =
+{
+    .suite_name = "PNG suite",
+    .number_of_tests = NUM_TESTS_PNG,
+    .test_list = test_list,
+};
+

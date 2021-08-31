@@ -17,7 +17,7 @@ debug: all
 	@:
 
 tests: clean libs $(BUILDDIR)/test.o $(BUILDDIR)/test_huffman.o $(BUILDDIR)/test_png.o $(BUILDDIR)/test_bitstream.o $(BUILDDIR)/test_inflate.o 
-	cd ../build && $(CC) test.o inflate.o png.o bitstream.o huffman.o logging.o test_png.o test_bitstream.o test_huffman.o test_inflate.o $(CFLAGS)  -o $(TEST_EXE)
+	cd $(BUILDDIR)  && $(CC) test.o inflate.o png.o bitstream.o huffman.o logging.o test_png.o test_bitstream.o test_huffman.o test_inflate.o $(CFLAGS)  -o $(TEST_EXE)
 
 $(BUILDDIR)/test.o: test.c
 	$(CC) -c test.c -o $(BUILDDIR)/test.o $(CFLAGS) 

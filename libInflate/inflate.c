@@ -12,7 +12,7 @@ zlibMetaData z_processHeader(bitstream_t *input)
     return z_data;
 }
 
-void z_inflate(bitstream_t *input, unsigned char *outputStream)
+uint32_t z_inflate(bitstream_t *input, unsigned char *outputStream)
 {
     uint8_t z_final = 0;
     uint8_t z_compression_type;
@@ -38,10 +38,12 @@ void z_inflate(bitstream_t *input, unsigned char *outputStream)
                     break;
                 default:
                     LOG(ERROR, "invalid compression type %d\n",z_compression_type);
-                    return; 
+                    return -1; 
                     break;
             };
      }
+
+    return outputLength;
 }
 
 void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength)
@@ -58,7 +60,7 @@ void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *o
     int32_t nlen = read_bits(input, 8);
     nlen = (nlen << 0x08) + read_bits(input, 8);
     
-    printf("%d bytes %d\n", len, nlen);
+     printf("%d bytes %d\n", len, nlen);
     for(int i = 0; i < len; i++)
     {
         *(outputStream + (*outputLength)++) = read_bits(input,8);
@@ -117,8 +119,7 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
     while (newcode != 256)
     {		
         newcode = search(input, huffmanTree);		                    
-        
-        printf("%d\n",*outputLength); 
+                
         if (newcode == -1)
         {
                 LOG(ERROR,"lost the code \n");
@@ -145,8 +146,13 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
             dlength = read_bits(input, check);
             
             LOG(DEBUG_3,"Going back %d\n",  dlength + distance_offset_table[dist]);
-
+        
             int startingPos = *outputLength;
+       
+            if((dlength + distance_offset_table[dist]) > startingPos){
+                LOG(ERROR, "Distance code too large\n"); 
+            }
+           LOG(DEBUG_3, "output length %d\n", *outputLength); 
             for(int i=0; i < length + literal_offset_table[lcode]; i++)
             {
                 outputStream[(*outputLength)++] = outputStream[startingPos - (dlength + distance_offset_table[dist]) + i];
@@ -243,7 +249,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         }
     }
 
-    node *len_huffman = constructHuffman(z_codes, z_num_codes_literal, 16);
+    node *len_huffman = constructHuffman(z_codes, z_num_codes_literal , 16);
     node *len_distance = constructHuffman(z_codes + z_num_codes_literal, z_num_codes_distance, 16);
 
     int newcode = 0;            
@@ -280,6 +286,12 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
             LOG(DEBUG_3,"Going back %d\n",  dlength + distance_offset_table[dist]);
 
             int startingPos = *outputLength;
+
+            if((dlength + distance_offset_table[dist]) > startingPos){
+                LOG(ERROR, "Distance code too large\n"); 
+            }
+
+           LOG(DEBUG_3, "output length %d\n", *outputLength); 
             for(int i=0; i < length + literal_offset_table[lcode]; i++)
             {
                 outputStream[(*outputLength)++] = outputStream[startingPos - (dlength + distance_offset_table[dist]) + i];
@@ -311,4 +323,24 @@ uint32_t z_readADLER32(bitstream_t *input)
     adler = (adler << 0x08) +  read_bits(input, 8);	
 
     return adler;
+}
+
+uint32_t z_ADLER32(uint8_t* buffer, uint32_t length)
+{
+
+    uint16_t A = 1;
+    uint16_t B = 0;
+    uint32_t result;
+
+    for(int i = 0; i < length; i++)
+    {
+        
+        A = (A + *(buffer + i)) % 65521;
+        B = (B + A) % 65521;
+        
+    }
+
+    result = (((uint32_t) B) << 16) + A;
+    return result;
+    
 }

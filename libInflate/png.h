@@ -25,27 +25,28 @@ typedef struct _pngMetaData{
 	uint8_t interlace_method;	
 } pngMetaData;
 
-void readFileToBuffer(const char* filename, unsigned char **buf);
+void readFileToBuffer(const char* filename, uint8_t **buf);
 
 // Given a file check if the PNG signature is correct
 bool validatePNG(FILE *fp);
 
 // Read the IHDR chunk and store metadata
-pngMetaData processHeader(unsigned char *buff);
+pngMetaData processHeader(uint8_t *buff);
 
 // Read the 4 bytes for chunk length
-uint32_t getChunkLength(unsigned char *buff);
+uint32_t getChunkLength(uint8_t *buff);
 
 // Read the 4 bytes corresponding to chunk type
-void getChunkType(unsigned char *buff,char *str);
+void getChunkType(uint8_t *buff,char *str);
 
 // Store chunk data in the buffer
-void getChunkData(unsigned char *fileBuffer, uint32_t chunkLength, unsigned char *chunkData);
+void getChunkData(uint8_t *fileBuffer, uint32_t chunkLength, uint8_t *chunkData);
 
 // Read the 4 bytes corresponding to the chunk CRC 
-uint32_t getCRC(unsigned char *buff);
+uint32_t getCRC(uint8_t *buff);
 
-// UNIMPLEMENTED. Perform CRC on chunk and compare with read value
-bool validateCRC(unsigned char* buff, uint32_t length, uint32_t CRC);
+// Perform CRC on chunk and compare with read value
+bool validateCRC(uint8_t* buff, uint32_t length, uint32_t CRC);
 
-uint64_t CRC32(uint8_t *buffer, uint32_t len);
+
+uint32_t CRC32(uint8_t *buffer, uint32_t len);

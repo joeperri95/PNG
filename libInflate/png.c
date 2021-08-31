@@ -1,6 +1,6 @@
 #include "png.h"
 
-void readFileToBuffer(const char *filename, unsigned char **buf)
+void readFileToBuffer(const char *filename, uint8_t **buf)
 {
   
     FILE *fp = fopen(filename, "rb");
@@ -18,10 +18,10 @@ void readFileToBuffer(const char *filename, unsigned char **buf)
             fseek(fp, 0, SEEK_SET);
           
             // allocate memory
-            *buf = (unsigned char*) malloc(sizeof(unsigned char) * (filesize + 1));
+            *buf = (uint8_t*) malloc(sizeof(uint8_t) * (filesize + 1));
             
             // read file to buf
-            size_t numread = fread(*buf, sizeof(unsigned char), filesize, fp);
+            size_t numread = fread(*buf, sizeof(uint8_t), filesize, fp);
             *(*buf + numread + 1) = '\0';
 
         }
@@ -38,7 +38,7 @@ void readFileToBuffer(const char *filename, unsigned char **buf)
     fclose(fp);
 }
 
-pngMetaData processHeader(unsigned char *buffer)
+pngMetaData processHeader(uint8_t *buffer)
 {
     pngMetaData pngData;
 
@@ -72,8 +72,8 @@ pngMetaData processHeader(unsigned char *buffer)
 
 bool validatePNG(FILE *fp)
 {
-    unsigned char loop;
-    unsigned char png_v[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+    uint8_t loop;
+    uint8_t png_v[8] = {137, 80, 78, 71, 13, 10, 26, 10};
     bool res = true;
 
     for (int i = 0; i < 8; i++)
@@ -90,10 +90,10 @@ bool validatePNG(FILE *fp)
 }
 
 
-uint32_t getChunkLength(unsigned char *buffer)
+uint32_t getChunkLength(uint8_t *buffer)
 {
 
-	unsigned char loop;
+	uint8_t loop;
 	uint32_t res = 0;
 
 	loop = *(buffer++);
@@ -111,19 +111,19 @@ uint32_t getChunkLength(unsigned char *buffer)
 	return res;
 }
 
-void getChunkData(unsigned char *fileBuffer, uint32_t chunkLength, unsigned char *chunkBuffer)
+void getChunkData(uint8_t *fileBuffer, uint32_t chunkLength, uint8_t *chunkBuffer)
 {
-        memcpy(chunkBuffer, fileBuffer, chunkLength * sizeof(unsigned char)); 
+        memcpy(chunkBuffer, fileBuffer, chunkLength * sizeof(uint8_t)); 
 }
 
 
-void getChunkType(unsigned char *buffer, char * str)
+void getChunkType(uint8_t *buffer, char * str)
 {
         memcpy(str, buffer, 4 * sizeof(char));
         str[5] = '\0';
 }
 
-uint32_t getCRC(unsigned char *buffer)
+uint32_t getCRC(uint8_t *buffer)
 {
 
 	uint32_t res = 0;
@@ -136,16 +136,18 @@ uint32_t getCRC(unsigned char *buffer)
 	return res;
 }
 
-bool validateCRC(unsigned char* buffer, uint32_t length, uint32_t CRC)
+bool validateCRC(uint8_t* buffer, uint32_t length, uint32_t CRC)
 {
     //  x^32+x^26+x^23+x^22+x^16+x^12+x^11+x^10+x^8+x^7+x^5+x^4+x^2+x+1
     // 0001 0000 0100 1100 0001 0001 1101 1011 0111 
     
-    return (CRC32(buffer, length) == CRC);
+    uint32_t ret = CRC32(buffer, length);
+    printf("0x%x\n", ret);
+    return ( ret == CRC);
 
 }
 
-uint64_t CRC32(uint8_t *buffer, uint32_t len)
+uint32_t CRC32(uint8_t *buffer, uint32_t len)
 {
     // perform a crc32 using a table as outlined in rfc2083 
 
@@ -170,5 +172,5 @@ uint64_t CRC32(uint8_t *buffer, uint32_t len)
         crc_register = crc_table[(crc_register ^ buffer[i]) & 0xff] ^ (crc_register >> 8);
     }
 
-    return crc_register ^ 0xffffffffL;
+    return (uint32_t) (crc_register ^ 0xffffffffL);
 }

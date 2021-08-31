@@ -24,7 +24,11 @@ int main(int argc, char **argv)
     uint32_t offset = 2;
     
     FILE *fp = fopen(filename, "rb");
-    gzip_validateFile(fp);
+    printf("%x %x\n", fgetc(fp), fgetc(fp));    
+    if( gzip_validateFile(fp) )
+    {
+        printf("ohKAY\n");
+    }
     fclose(fp);
     
     uint32_t size = gzip_readFileToBuffer(filename, &buffer);
@@ -36,9 +40,18 @@ int main(int argc, char **argv)
     create_bitstream(&c, buffer + offset, size  - offset);
 
     output = malloc(10000 * sizeof(unsigned char));
-    z_inflate(&c, output);
+
+    uint32_t len = z_inflate(&c, output);
     
-    for(int i = 0; i < 10000; i ++)
+    uint32_t adler = z_readADLER32(&c);
+    uint32_t adlerComputed = z_ADLER32(output, len);
+    
+    if(adler != adlerComputed)
+    {
+        printf("BAD ADLER32 0x%x != 0x%x\n", adler, adlerComputed);
+    }
+
+    for(int i = 0; i < len; i ++)
     {
         printf("%c", output[i]);
     }

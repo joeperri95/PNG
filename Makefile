@@ -28,24 +28,6 @@ debug: all
 tests: clean 
 	cd tests && $(MAKE)
 
-tests2: clean test.o png.o bitstream.o huffman.o inflate.o logging.o test_png.o test_bitstream.o test_huffman.o test_inflate.o 
-	$(CC) test.o inflate.o png.o bitstream.o huffman.o logging.o test_png.o test_bitstream.o test_huffman.o test_inflate.o -I. -Itests -o $(TEST_EXE)
-
-test.o: tests/test.c
-	$(CC) -c tests/test.c -o test.o -I. -Itests
-
-test_png.o: tests/test_png.c
-	$(CC) -c tests/test_png.c -o test_png.o -I. -Itests
-	
-test_bitstream.o: tests/test_bitstream.c
-	$(CC) -c tests/test_bitstream.c -o test_bitstream.o -I. -Itests
-	
-test_huffman.o: tests/test_huffman.c
-	$(CC) -c tests/test_huffman.c -o test_huffman.o -I. -Itests
-	
-test_inflate.o: tests/test_inflate.c	
-	$(CC) -c tests/test_inflate.c -o test_inflate.o -I. -Itests
-
 $(BUILDDIR)/main.o: main.c
 	$(CC) main.c -c -o $(BUILDDIR)/main.o -I. $(CFLAGS)
 

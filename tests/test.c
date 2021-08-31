@@ -3,39 +3,88 @@
 #include "test_huffman.h"
 #include "test_png.h"
 
-void main(int argc, char *argv)
+test_results run_suite(test_suite suite)
 {
 
-    test bitstream_suite[NUM_TESTS_BITSTREAM] = {test_create_bitstream_length, test_create_bitstream_bit_offset,
-    test_create_bitstream_byte_offset, test_delete_bitstream, test_read_bit, test_read_byte, test_read_byte_rollover,
-    test_bit_offset_rollover, test_byte_offset_rollover};
-    
-    for(int i = 0; i < NUM_TESTS_BITSTREAM; i++)
+    test_results res =
     {
-        bitstream_suite[i]();
+        .num_passed = 0,
+        .num_failed = 0,
+        .num_total = suite.number_of_tests,
+    };
+
+    printf("Running test suite: %s\n", suite.suite_name);
+    for(int i = 0; i < suite.number_of_tests; i++)
+    {
+       if(suite.test_list[i].procedure())
+       {
+            printf("Test %s " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET, suite.test_list[i].test_name);
+            res.num_passed++;
+       }
+       else
+       {
+            printf("Test %s " ANSI_COLOR_RED "FAILED\n" ANSI_COLOR_RESET, suite.test_list[i].test_name);
+            res.num_failed++;
+       }
     }
     
-    printf( "All bitstream tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
-
-    test huffman_suite[NUM_TESTS_HUFFMAN] = {test_create_node_data, test_create_node_left_null,
-    test_create_node_right_null, test_insert_left, test_insert_right, test_insert_empty};
-
-    for(int i = 0; i < NUM_TESTS_HUFFMAN; i++)
+    if(res.num_passed == res.num_total)
     {
-        huffman_suite[i]();
+        printf("All %d tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET, res.num_total);
+    }
+    else if(res.num_failed == res.num_total)
+    {
+        printf("All %d tests " ANSI_COLOR_RED "FAILED\n" ANSI_COLOR_RESET, res.num_total);
+    }
+    else
+    {
+        printf("Tests complete: %d tests " ANSI_COLOR_GREEN "PASSED" ANSI_COLOR_RESET " %d tests "
+        ANSI_COLOR_RED "FAILED\n" ANSI_COLOR_RESET , res.num_passed, res.num_failed);
     }
 
-    printf( "All huffman tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
-    
-    test png_suite[NUM_TESTS_PNG] = {test_SimpleCRC};
-    for(int i = 0; i < NUM_TESTS_PNG; i++)
-    {
-
-png_suite[i]();
+    return res;
 }
 
-    printf( "All png tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
-    printf( "All tests " ANSI_COLOR_GREEN "PASSED\n" ANSI_COLOR_RESET);
+
+
+int  main(int argc, char *argv)
+{
+
+    extern test_suite bitstream_suite; 
+    extern test_suite huffman_suite;
+    extern test_suite png_suite;
+    extern test_suite inflate_suite;
+
+    test_results  to_date;
+    
+    test_results total = {
+        .num_passed = 0,
+        .num_failed = 0,
+        .num_total  = 0,
+    };
+
+    to_date = run_suite(bitstream_suite); 
+    total.num_passed += to_date.num_passed;
+    total.num_failed += to_date.num_failed; 
+    total.num_total += to_date.num_total; 
+
+    to_date = run_suite(huffman_suite);
+    total.num_passed += to_date.num_passed;
+    total.num_failed += to_date.num_failed; 
+    total.num_total += to_date.num_total; 
+    
+    to_date = run_suite(inflate_suite);
+    total.num_passed += to_date.num_passed;
+    total.num_failed += to_date.num_failed; 
+    total.num_total += to_date.num_total; 
+
+    to_date = run_suite(png_suite);
+    total.num_passed += to_date.num_passed;
+    total.num_failed += to_date.num_failed; 
+    total.num_total += to_date.num_total; 
+
+    printf("All %d tests complete: %d tests " ANSI_COLOR_GREEN "PASSED" ANSI_COLOR_RESET " %d tests "
+    ANSI_COLOR_RED "FAILED\n" ANSI_COLOR_RESET , total.num_total, total.num_passed, total.num_failed);
 
     return 0;
 
