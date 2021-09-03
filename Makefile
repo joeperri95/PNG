@@ -10,10 +10,10 @@ all: png gunzip
     @:
 
 png: clean libs $(BUILDDIR)/main.o 
-	cd $(BUILDDIR) && $(CC) $(CFLAGS) main.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(EXE)
+	cd $(BUILDDIR) && $(CC) $(CFLAGS) main.o checksum.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(EXE)
 
 gunzip: clean libs $(BUILDDIR)/gunzip.o
-	cd $(BUILDDIR) && $(CC) $(CFLAGS) gunzip.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(GUNZIP_EXE) 
+	cd $(BUILDDIR) && $(CC) $(CFLAGS) gunzip.o checksum.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(GUNZIP_EXE) 
 
 # just build all object files
 libs: clean 

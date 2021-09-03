@@ -7,7 +7,7 @@ all: libs
 	@:
 
 # just build all object files
-libs: clean png.o bitstream.o huffman.o inflate.o logging.o gzip.o
+libs: clean png.o bitstream.o huffman.o inflate.o logging.o gzip.o checksum.o
 	@:
 
 # build with debug flag
@@ -17,6 +17,9 @@ debug: all
 
 png.o: png.c
 	$(CC) png.c -c -o $(BUILDDIR)/png.o -I. $(CFLAGS)
+
+checksum.o: checksum.c
+	$(CC) checksum.c -c -o $(BUILDDIR)/checksum.o -I. $(CFLAGS)
 
 inflate.o: inflate.c
 	$(CC) inflate.c -c -o $(BUILDDIR)/inflate.o -I. $(CFLAGS)
