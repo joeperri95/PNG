@@ -3,3 +3,4 @@ png
 test
 *.csv
 build/*
+.vscode/*

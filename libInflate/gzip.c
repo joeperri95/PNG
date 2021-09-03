@@ -140,9 +140,9 @@ uint32_t gzip_getISIZE(unsigned char *buffer){
     uint8_t offset = 0;
     uint32_t ret = *(buffer + offset++);
 
-    ret += *(buffer + offset++) << 8;
-    ret += *(buffer + offset++) << 16;
-    ret += *(buffer + offset++) << 24;
+    ret += (*(buffer + offset++) << 8);
+    ret += (*(buffer + offset++) << 16);
+    ret += (*(buffer + offset++) << 24);
     
     return ret;
 

@@ -225,13 +225,13 @@ void freeHuffman(node *tree)
 uint32_t search(bitstream_t *b, node *tree)
 {
     uint32_t runlen = 1;
-    uint32_t lencode = read_bits(b, 1);
+    uint32_t lencode = read_bits_big_endian(b, 1);
     uint32_t newcode = searchCode(tree, lencode, runlen);
     
     while (newcode == 0xFFFFFFFF && runlen < 16)
     {
             runlen++;
-            uint32_t len_buffer = read_bits(b, 1);
+            uint32_t len_buffer = read_bits_big_endian(b, 1);
             lencode = (lencode << 0x01) + len_buffer;
             newcode = searchCode(tree, lencode , runlen);
             //printNbits(lencode, runlen);

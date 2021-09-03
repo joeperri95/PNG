@@ -5,6 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "logging.h"
+#include "checksum.h"
 
 #define BFINAL 0x01
 #define BTYPE 0x06
@@ -47,6 +48,3 @@ uint32_t getCRC(uint8_t *buff);
 
 // Perform CRC on chunk and compare with read value
 bool validateCRC(uint8_t* buff, uint32_t length, uint32_t CRC);
-
-
-uint32_t CRC32(uint8_t *buffer, uint32_t len);

@@ -3,11 +3,11 @@
 zlibMetaData z_processHeader(bitstream_t *input)
 {
     zlibMetaData z_data;
-    z_data.compression_method = read_bits(input, 4);
-    z_data.compression_info = 0x01 << (read_bits(input, 4) + 0x08);
-    z_data.fcheck = read_bits(input, 5);
-    z_data.fdict = read_bits(input, 1);
-    z_data.flevel = read_bits(input, 2);
+    z_data.compression_method = read_bits_little_endian(input, 4);
+    z_data.compression_info = 0x01 << (read_bits_little_endian(input, 4) + 0x08);
+    z_data.fcheck = read_bits_little_endian(input, 5);
+    z_data.fdict = read_bits_little_endian(input, 1);
+    z_data.flevel = read_bits_little_endian(input, 2);
 
     return z_data;
 }
@@ -20,8 +20,8 @@ uint32_t z_inflate(bitstream_t *input, unsigned char *outputStream)
 
      while(! z_final){
             
-            z_final = read_bits(input, 1);
-            z_compression_type = read_bits(input , 2);
+            z_final = read_bits_little_endian(input, 1);
+            z_compression_type = read_bits_little_endian(input , 2);
 
             LOG(INFO, "final block %d\n", z_final);
             LOG(INFO, "compression type %d\n", z_compression_type);
@@ -54,16 +54,13 @@ void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *o
         input->byte_offset++;
     }
 
-    uint32_t len = read_bits(input, 8);
-    len = (len << 0x08) + read_bits(input, 8);
-
-    int32_t nlen = read_bits(input, 8);
-    nlen = (nlen << 0x08) + read_bits(input, 8);
+    uint32_t len = read_bits_big_endian(input, 16);    
+    int32_t nlen = read_bits_big_endian(input, 16);    
     
      printf("%d bytes %d\n", len, nlen);
     for(int i = 0; i < len; i++)
     {
-        *(outputStream + (*outputLength)++) = read_bits(input,8);
+        *(outputStream + (*outputLength)++) = read_bits_little_endian(input,8);
     }
 }
 
@@ -137,13 +134,13 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
             
             int lcode = newcode - 257;
             btr = literal_extra_bit_table[lcode];
-            length  = read_bits(input, btr);
+            length  = read_bits_little_endian(input, btr);
 
             LOG(DEBUG_3,"Copying %d\n", length + literal_offset_table[lcode]);
             
             int dist = search(input, distanceHuffman);
             check = distance_extra_bit_table[dist]; 
-            dlength = read_bits(input, check);
+            dlength = read_bits_little_endian(input, check);
             
             LOG(DEBUG_3,"Going back %d\n",  dlength + distance_offset_table[dist]);
         
@@ -175,9 +172,9 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
     uint32_t codes[19]                          =  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
     uint32_t *z_codes;
-    uint32_t z_num_codes_literal = 257 + read_bits(input, 5);
-    uint32_t z_num_codes_distance = 1 + read_bits(input, 5);
-    uint32_t z_num_codes_huffman = 4 + read_bits(input, 4);
+    uint32_t z_num_codes_literal = 257 + read_bits_little_endian(input, 5);
+    uint32_t z_num_codes_distance = 1 + read_bits_little_endian(input, 5);
+    uint32_t z_num_codes_huffman = 4 + read_bits_little_endian(input, 4);
 
     LOG(INFO, "literal codes %d\n", z_num_codes_literal);
     LOG(INFO, "distance codes %d\n", z_num_codes_distance);
@@ -185,7 +182,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
 
     for (int i = 0; i < z_num_codes_huffman; i++)
     {
-        codes[i] = read_bits(input, 3);
+        codes[i] = read_bits_little_endian(input, 3);
         LOG(DEBUG_1, "num %d code %d\n", codedict[i], codes[i]);
     }
 
@@ -216,7 +213,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         {
             if (code == 16)
             {
-                extra = read_bits(input, 2);
+                extra = read_bits_little_endian(input, 2);
                 uint32_t prev = z_codes[index - 1];
                 for (int j = 0; j < 3 + extra; j++)
                 {
@@ -225,7 +222,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
             }
             else if (code == 17)
             {				
-                    extra = read_bits(input, 3);
+                    extra = read_bits_little_endian(input, 3);
                     
                     for (int j = 0; j < 3 + extra; j++)
                     {
@@ -234,7 +231,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
             }
             else if (code == 18)
             {
-                    extra = (read_bits(input, 7));
+                    extra = (read_bits_little_endian(input, 7));
 
                     for (int j = 0; j < 11 + extra; j++)
                     {
@@ -250,8 +247,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
     }
 
     
-    node *len_huffman = constructHuffman(z_codes, z_num_codes_literal , 16);
-    printf("\n"); 
+    node *len_huffman = constructHuffman(z_codes, z_num_codes_literal , 16);    
     node *len_distance = constructHuffman(z_codes + z_num_codes_literal, z_num_codes_distance, 16);
 
     int newcode = 0;            
@@ -276,26 +272,15 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
             uint32_t dextra, lextra, dcode, lcode; 
             
             lcode = newcode - 257;
-            lextra  = read_bits(input, literal_extra_bit_table[lcode]);
+            lextra  = read_bits_little_endian(input, literal_extra_bit_table[lcode]);
             length = literal_offset_table[lcode] + lextra; 
 
             dcode = search(input, len_distance);
            
             int btr =  distance_extra_bit_table[dcode];
 
-            if(distance_extra_bit_table[dcode] > 16)
-            {
-                printf("Unhandled %d\n", distance_extra_bit_table[dcode]);                
-            }
-           else if(distance_extra_bit_table[dcode] > 8)
-            {
-               int btr =  distance_extra_bit_table[dcode];
-                dextra = _read_bits(input, btr - 8);
-                dextra = dextra + (_read_bits(input, 8) << btr - 8);
-            }
-            else{
-                dextra = read_bits(input, distance_extra_bit_table[dcode]);
-            } 
+            dextra = read_bits_little_endian(input, distance_extra_bit_table[dcode]);
+            
             distance = distance_offset_table[dcode] + dextra;
 
             LOG(DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
@@ -333,30 +318,9 @@ uint32_t z_readADLER32(bitstream_t *input)
 		input->byte_offset++;
 	}
 
-    uint32_t adler = read_bits(input, 8);
-	adler = (adler << 0x08) +  read_bits(input, 8);
-	adler = (adler << 0x08) +  read_bits(input, 8);
-    adler = (adler << 0x08) +  read_bits(input, 8);	
+    uint32_t adler = read_bits_big_endian(input, 32);
+    
+
 
     return adler;
-}
-
-uint32_t z_ADLER32(uint8_t* buffer, uint32_t length)
-{
-
-    uint16_t A = 1;
-    uint16_t B = 0;
-    uint32_t result;
-
-    for(int i = 0; i < length; i++)
-    {
-        
-        A = (A + *(buffer + i)) % 65521;
-        B = (B + A) % 65521;
-        
-    }
-
-    result = (((uint32_t) B) << 16) + A;
-    return result;
-    
 }

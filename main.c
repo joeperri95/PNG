@@ -4,6 +4,7 @@
 #include "inflate.h"
 #include "logging.h"
 #include "gzip.h"
+#include "checksum.h"
 
 
 
@@ -151,7 +152,7 @@ int main(int argc, char **argv)
         printf("bpp %d\n", bpp);
 
 	uint32_t adler = z_readADLER32(&b);
-	uint32_t adler_computed = z_ADLER32(outputStream, len);
+	uint32_t adler_computed = ADLER32(outputStream, len);
 
 	if(adler != adler_computed)
 	{

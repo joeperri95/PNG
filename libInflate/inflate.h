@@ -32,7 +32,4 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
 // Read the final 4 bytes in the bitstream
 uint32_t z_readADLER32(bitstream_t *input);
 
-// Compute ADLER32 checksum
-uint32_t z_ADLER32(uint8_t* buffer, uint32_t length);
-
 #endif

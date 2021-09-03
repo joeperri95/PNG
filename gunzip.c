@@ -4,6 +4,7 @@
 #include "inflate.h"
 #include "logging.h"
 #include "gzip.h"
+#include "checksum.h"
 
 // This is the entry point for the gunzip implementation
 
@@ -36,18 +37,20 @@ int main(int argc, char **argv)
     offset += gzip.header_size;
     bitstream_t c;
 
-    uint32_t crc = gzip_getCRC32(buffer + size - 12);
-    uint32_t isize = gzip_getISIZE(buffer + size - 8);
+    uint32_t crc = gzip_getCRC32(buffer + size - 8);
+    uint32_t isize = gzip_getISIZE(buffer + size - 4);
    
-    printf("CRC %d\nISIZE %d\n", crc, isize);
+    
+    
     create_bitstream(&c, buffer + offset, size  - offset - 8);
 
     output = malloc(isize * sizeof(unsigned char));
 
     uint32_t len = z_inflate(&c, output);
     
+    printf("CRC %u %u\nISIZE %u\n", crc, CRC32(output, isize), isize);
     uint32_t adler = z_readADLER32(&c);
-    uint32_t adlerComputed = z_ADLER32(output, len);
+    uint32_t adlerComputed = ADLER32(output, len);
     
     if(adler != adlerComputed)
     {
