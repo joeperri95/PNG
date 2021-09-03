@@ -27,10 +27,13 @@
 // This is where you set the log level
 #define LOGGING_LEVEL INFO 
 //#define LOGGING_LEVEL DEBUG_ALL 
+//#define LOGGING_LEVEL 9 
 
 #define LOGGING_ENABLED true 
 
 // TODO turn this into a real library with timestamps, file logging and ANSI color codes
+
+#define LOG_FILE "/dev/stdout"
 
 void LOG(uint8_t level, const char* message, ...);
 

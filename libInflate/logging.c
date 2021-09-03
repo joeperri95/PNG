@@ -5,7 +5,7 @@ void timestamp()
 
 }
 
-void level(uint8_t level)
+void prefix(uint8_t level)
 {
     switch(level)
     {
@@ -16,7 +16,15 @@ void level(uint8_t level)
         case WARNING:
             printf(ANSI_COLOR_YELLOW "WARNING: " ANSI_COLOR_RESET);
         break;
+    
+        case INFO:
+            printf(ANSI_COLOR_GREEN "INFO: " ANSI_COLOR_RESET);
+        break;
 
+        default:
+        
+            printf(ANSI_COLOR_MAGENTA "DEBUG %d: " ANSI_COLOR_RESET, level - 2);
+        break;
     }
 }
 
@@ -26,6 +34,8 @@ void LOG(uint8_t level, const char* message, ...)
     {
         if(level <= LOGGING_LEVEL)
         {
+            
+            prefix(level); 
 
             va_list variadic_arguments;
             va_start(variadic_arguments, message);
