@@ -24,10 +24,9 @@ int main(int argc, char **argv)
     uint32_t offset = 2;
     
     FILE *fp = fopen(filename, "rb");
-    printf("%x %x\n", fgetc(fp), fgetc(fp));    
-    if( gzip_validateFile(fp) )
+    if( !gzip_validateFile(fp) )
     {
-        printf("ohKAY\n");
+        LOG(ERROR, "Could not validate gzip file\n");
     }
     fclose(fp);
     
@@ -37,9 +36,13 @@ int main(int argc, char **argv)
     offset += gzip.header_size;
     bitstream_t c;
 
-    create_bitstream(&c, buffer + offset, size  - offset);
+    uint32_t crc = gzip_getCRC32(buffer + size - 12);
+    uint32_t isize = gzip_getISIZE(buffer + size - 8);
+   
+    printf("CRC %d\nISIZE %d\n", crc, isize);
+    create_bitstream(&c, buffer + offset, size  - offset - 8);
 
-    output = malloc(10000 * sizeof(unsigned char));
+    output = malloc(isize * sizeof(unsigned char));
 
     uint32_t len = z_inflate(&c, output);
     
@@ -48,7 +51,11 @@ int main(int argc, char **argv)
     
     if(adler != adlerComputed)
     {
-        printf("BAD ADLER32 0x%x != 0x%x\n", adler, adlerComputed);
+        LOG(WARNING, "BAD ADLER32 0x%x != 0x%x\n", adler, adlerComputed);
+    }
+    else
+    {
+        LOG(INFO, "GOOD ADLER32\n");
     }
 
     for(int i = 0; i < len; i ++)

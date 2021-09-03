@@ -129,6 +129,59 @@ bool test_read_max_bits()
     return ret;
 }
 
+bool test_read_no_bits()
+{
+
+    bool ret = false;
+    bitstream_t bits;
+    create_bitstream(&bits, data, TEST_DATA_LENGTH);
+
+    uint64_t value = read_bits(&bits, 0);
+    ret = assert(bits.bit_offset == 0);
+
+    delete_bitstream(&bits);
+    return ret;
+
+}
+
+bool test_read_no_bits_offset()
+{
+
+    bool ret = false;
+    bitstream_t bits;
+    create_bitstream(&bits, data, TEST_DATA_LENGTH);
+
+    uint64_t value = read_bits(&bits, 3);
+    value = read_bits(&bits, 0);
+    ret = assert(bits.bit_offset == 3);
+
+    delete_bitstream(&bits);
+    return ret;
+
+}
+
+bool test_read_bit7()
+{
+    // I have some suspicions that something suspicious is happening
+    bool ret = false;
+    bitstream_t bits;
+
+    uint8_t samp[] = {0x7F, 0x80};
+    create_bitstream(&bits, samp, 2);
+
+    uint64_t value = read_bits(&bits, 7);
+    value = read_bits(&bits, 1);
+    ret = assert(value == 0);
+
+    value = read_bits(&bits, 7);
+    value = read_bits(&bits, 1);
+    ret = assert(value == 1);
+    
+    delete_bitstream(&bits);
+    return ret;
+
+}
+
 static test test_list[NUM_TESTS_BITSTREAM] = 
 {
 {"test create bitstream length", test_create_bitstream_length},
@@ -141,6 +194,9 @@ static test test_list[NUM_TESTS_BITSTREAM] =
 {"test byte offset rollover", test_byte_offset_rollover}, 
 {"test bit offset rollover", test_bit_offset_rollover}, 
 {"test read max bits", test_read_max_bits},
+{"test read no bits", test_read_no_bits},
+{"test read no bits offset", test_read_no_bits_offset},
+{"test read bit 7", test_read_bit7},
 };
 
 extern test_suite bitstream_suite =

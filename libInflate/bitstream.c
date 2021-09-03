@@ -32,7 +32,7 @@ uint8_t _read_bits(bitstream_t *bits, int N)
 
     // construct mask
     mask = ((0x01 << endbit) - 1) - ((0x01 << bits->bit_offset) - 1);    
-
+    
     if(endbit > 8){
     // byte wrap
 
@@ -54,18 +54,10 @@ uint8_t _read_bits(bitstream_t *bits, int N)
     else if(endbit == 8)
     {
         // read current byte
-        ret = (data & (mask &0x00FF)) >> (bits->bit_offset);
-
+        ret = (data & (mask & 0x00FF)) >> (bits->bit_offset);
         
         bits->byte_offset++;
         bits->bit_offset = 0;
-
-        if(bits->byte_offset > bits->length){
-            return 0;
-        }
-
-        data = *(bits->buffer + bits->byte_offset);
-        
     }
 
     else
@@ -90,6 +82,10 @@ uint64_t read_bits(bitstream_t *bits, int N)
         LOG(ERROR, "Can only read up to 64 bits\n");
         return 0XFFFFFFFF;
     }
+    else if(N == 0)
+    {
+        return 0;
+    }
 
     int bits_left = N;
     uint64_t ret = 0;
@@ -102,8 +98,7 @@ uint64_t read_bits(bitstream_t *bits, int N)
         bits_left -= 8;
     }
 
-    ret = ret << bits_left;
-    ret |= _read_bits(bits, bits_left);
+    ret += _read_bits(bits, bits_left);
 
     return ret;
 }

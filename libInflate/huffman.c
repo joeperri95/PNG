@@ -151,7 +151,7 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
         
         if (currentNode == NULL)
         {
-            // printf("node not found\n");
+            LOG(WARNING, "node not found\n");
             return 0xFFFFFFFF;
         }
     }
@@ -160,6 +160,7 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
     {
         // Not a leaf node
         // printf("not a leaf node\n");
+        //LOG(WARNING, "not a leaf node\n");
         return 0xFFFFFFFF; 
     }
 
@@ -236,8 +237,8 @@ uint32_t search(bitstream_t *b, node *tree)
             //printNbits(lencode, runlen);
     }
 
-    LOG(DEBUG_2, "length: %d val: %d code %d\n", runlen, newcode, lencode);
-   // printNbits(lencode, runlen);
+    LOG(9, "length: %d val: %d code %d\n", runlen, newcode, lencode);
+    //printNbits(lencode, runlen);
 
     return newcode;
 }

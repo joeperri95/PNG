@@ -155,8 +155,12 @@ int main(int argc, char **argv)
 
 	if(adler != adler_computed)
 	{
-		printf("BAD ADLER32 0x%x != 0x%x\n", adler, adler_computed);
+		LOG( WARNING, "BAD ADLER32 0x%x != 0x%x\n", adler, adler_computed);
 	}
+        else
+        {
+		LOG(INFO , "GOOD ADLER32\n");
+        }
 
 	delete_bitstream(&b);
 	
@@ -166,16 +170,8 @@ int main(int argc, char **argv)
 	uint8_t *currentScanline = malloc(scanwidth - 1);
         memset(prevScanline, 0, scanwidth - 1);
 	FILE *ofp = fopen("outputlog.ppm", "w");
-	FILE *ofpr = fopen("decompressed.ppm", "w");
 
-        fprintf(ofp, "P6\n128 68\n255\n");
-        fprintf(ofpr, "P6\n128 68\n255\n");
-
-        for(int i = 0; i < uncompressed_size; i++)
-        {
-            fputc( outputStream[i], ofpr);
-        }
-        fclose(ofpr);
+        fprintf(ofp, "P6\n%d %d\n%d\n", pngData.width, pngData.height, (1 << pngData.bit_depth) - 1);
 
        // for(int i = 0; i < pngData.height - pngData.height + 1; i++)
 
@@ -235,9 +231,9 @@ int main(int argc, char **argv)
 						int ret = 0;
 						int reconstructed = 0;
 						
-						int res_left =     (res - paeth_left);
-						int res_top =      (res - paeth_top);
-						int res_top_left = (res - paeth_top_left);
+						int res_left =     abs(res - paeth_left);
+						int res_top =      abs(res - paeth_top);
+						int res_top_left = abs(res - paeth_top_left);
 
 						if((res_left <= res_top) && (res_left <= res_top_left))
 						{

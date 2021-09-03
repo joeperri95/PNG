@@ -249,7 +249,9 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         }
     }
 
+    
     node *len_huffman = constructHuffman(z_codes, z_num_codes_literal , 16);
+    printf("\n"); 
     node *len_distance = constructHuffman(z_codes + z_num_codes_literal, z_num_codes_distance, 16);
 
     int newcode = 0;            
@@ -266,35 +268,49 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         else if (newcode < 256)
         {
             outputStream[(*outputLength)++] = newcode;
+            LOG(DEBUG, "%d %d lit\n",*outputLength,   newcode );
         }
         else if (newcode > 256)
         {
-            int btr = 0;
-            int check = 0;
-            uint32_t length, dlength = 0;
+            uint32_t length, distance = 0;
+            uint32_t dextra, lextra, dcode, lcode; 
             
-            int lcode = newcode - 257;
-            btr = literal_extra_bit_table[lcode];
-            length  = (read_bits(input, btr));
+            lcode = newcode - 257;
+            lextra  = read_bits(input, literal_extra_bit_table[lcode]);
+            length = literal_offset_table[lcode] + lextra; 
 
-            LOG(DEBUG_3,"Copying %d\n", length + literal_offset_table[lcode]);
-            
-            int dist = search(input, len_distance);
-            check = distance_extra_bit_table[dist]; 
+            dcode = search(input, len_distance);
+           
+            int btr =  distance_extra_bit_table[dcode];
 
-            dlength = read_bits(input, check);
-            LOG(DEBUG_3,"Going back %d\n",  dlength + distance_offset_table[dist]);
+            if(distance_extra_bit_table[dcode] > 16)
+            {
+                printf("Unhandled %d\n", distance_extra_bit_table[dcode]);                
+            }
+           else if(distance_extra_bit_table[dcode] > 8)
+            {
+               int btr =  distance_extra_bit_table[dcode];
+                dextra = _read_bits(input, btr - 8);
+                dextra = dextra + (_read_bits(input, 8) << btr - 8);
+            }
+            else{
+                dextra = read_bits(input, distance_extra_bit_table[dcode]);
+            } 
+            distance = distance_offset_table[dcode] + dextra;
 
-            int startingPos = *outputLength;
+            LOG(DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
+            dextra,lcode,  literal_offset_table[lcode], lextra );
 
-            if((dlength + distance_offset_table[dist]) > startingPos){
+            if(distance > *outputLength){
                 LOG(ERROR, "Distance code too large\n"); 
             }
 
-           LOG(DEBUG_3, "output length %d\n", *outputLength); 
-            for(int i=0; i < length + literal_offset_table[lcode]; i++)
+            for(int i=0; i < length; i++)
             {
-                outputStream[(*outputLength)++] = outputStream[startingPos - (dlength + distance_offset_table[dist]) + i];
+                LOG(DEBUG, "%d %d %d\n",*outputLength, *outputLength - distance,
+                outputStream[*outputLength - distance]);
+                outputStream[*outputLength] = outputStream[*outputLength - distance];
+                (*outputLength)++;
             }        
         }
     }
