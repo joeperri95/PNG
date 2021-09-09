@@ -36,19 +36,19 @@ uint32_t CRC32(uint8_t *buffer, uint32_t len)
 uint32_t ADLER32(uint8_t* buffer, uint32_t length)
 {
 
-    uint16_t A = 1;
-    uint16_t B = 0;
+    uint32_t A = 1;
+    uint32_t B = 0;
     uint32_t result;
 
     for(int i = 0; i < length; i++)
     {
-        
-        A = (A + *(buffer + i)) % 65521;
-        B = (B + A) % 65521;
-        
+        A = (A + *(buffer + i));
+        B = (B + A);
+        A = A % 65521; 
+        B = B % 65521;
     }
 
-    result = (((uint32_t) B) << 16) + A;
+    result = (B << 16) + A;
     return result;
     
 }

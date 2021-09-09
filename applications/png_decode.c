@@ -5,7 +5,7 @@
 #include "logging.h"
 #include "gzip.h"
 #include "checksum.h"
-
+#include "image.h"
 
 
 void print8bits(uint8_t target);
@@ -53,13 +53,13 @@ int main(int argc, char **argv)
 	
 	while(!png_quit){
 		chunkLength = getChunkLength(pngBuffer + offset);
-		printf("chunk length %d\n", chunkLength);
+	        LOG(DEBUG, "chunk length %d\n", chunkLength);
 		offset += 4; 
 
 		getChunkType(pngBuffer + offset, chunkType);
 		
-		offset += 4; 
-		printf("type: %s\n", chunkType);
+		offset += 4;
+		LOG(INFO, "Chunk type: %s\n", chunkType);
 
 		chunkBuffer = realloc(chunkBuffer, chunkLength * sizeof(uint8_t));
 		getChunkData(pngBuffer + offset, chunkLength, chunkBuffer);
@@ -74,6 +74,11 @@ int main(int argc, char **argv)
 			memcpy(dataStream + (dataLength - chunkLength), chunkBuffer, chunkLength);
 			//getChunkData(pngBuffer + offset, chunkLength, dataStream + (dataLength - chunkLength));
 		}
+                else if(strncmp(chunkType, "sRGB", 4) == 0)
+                {
+                    LOG(ERROR, "SRGB Not implemented\n");
+                    exit(1);
+                }
 		else if(strncmp(chunkType, "IEND", 4) == 0)
 		{
 			png_quit = true;
@@ -82,7 +87,6 @@ int main(int argc, char **argv)
 		offset += chunkLength;
 
 		uint32_t crc = getCRC(pngBuffer + offset);
-		printf("CRC: 0x%x\n", crc);
 
 		crcBuffer = realloc(crcBuffer, (chunkLength + 4) * sizeof(uint8_t));
 		
@@ -102,8 +106,6 @@ int main(int argc, char **argv)
 		offset += 4;
 	}
 
-	printf("datalength %d\n", dataLength);    
-
 	//zlib section
 
        
@@ -121,6 +123,8 @@ int main(int argc, char **argv)
 		break;
 		case 3:
 			// using a pallete. This is currently not supported
+                        LOG(ERROR, "Pallete chunks not supported\n");
+                        exit(1);
 		break;
 		
 		case 4:
@@ -140,7 +144,6 @@ int main(int argc, char **argv)
 
         uint32_t uncompressed_size = (scanwidth) * pngData.height;
 	uint8_t *outputStream = malloc(uncompressed_size * sizeof(uint8_t));
-	uint32_t outputLength = 0;
 
 	bitstream_t b;
 	create_bitstream(&b, dataStream, dataLength);
@@ -148,11 +151,24 @@ int main(int argc, char **argv)
 	zlibMetaData z_data = z_processHeader(&b);
 	
 	uint32_t len = z_inflate(&b, outputStream);
-	printf("len %d %d\n", len, uncompressed_size);
-        printf("bpp %d\n", bpp);
+
+        if(len != uncompressed_size)
+        {
+                LOG(WARNING, "inflate size wrong\n");
+        }
 
 	uint32_t adler = z_readADLER32(&b);
 	uint32_t adler_computed = ADLER32(outputStream, len);
+
+        if(b.byte_offset != b.length)
+        {
+                LOG(WARNING, "Extra bytes in bitstream\n");
+        }
+
+        if(b.bit_offset != 0)
+        {
+                LOG(WARNING, "Bitstream has offset\n");
+        }
 
 	if(adler != adler_computed)
 	{
@@ -160,126 +176,53 @@ int main(int argc, char **argv)
 	}
         else
         {
-		LOG(INFO , "GOOD ADLER32\n");
+		LOG(INFO , "GOOD ADLER32 0x%x\n",adler);
         }
 
+    
 	delete_bitstream(&b);
+
+
+	uint8_t *defiltered = malloc(pngData.height * pngData.width * bpp);
+	defilter( defiltered , outputStream, pngData);
 	
-
-	int filterType = 0;
-	uint8_t *prevScanline = malloc(scanwidth - 1);
-	uint8_t *currentScanline = malloc(scanwidth - 1);
-        memset(prevScanline, 0, scanwidth - 1);
-	FILE *ofp = fopen("outputlog.ppm", "w");
-
-        fprintf(ofp, "P6\n%d %d\n%d\n", pngData.width, pngData.height, (1 << pngData.bit_depth) - 1);
-
-       // for(int i = 0; i < pngData.height - pngData.height + 1; i++)
-
-        for(int i = 0; i < pngData.height ; i++)
-	{
-		filterType = outputStream[i * scanwidth];
-		
-		switch(filterType)
-		{
-			case 0:
-				LOG(DEBUG, "None\n");
-				for(int j = 1; j < scanwidth; j++)
-				{
-					currentScanline[j - 1] = outputStream[i * scanwidth + j];
-					fputc(currentScanline[j - 1], ofp);
-				}
-				break;
-			case 1:
-				LOG(DEBUG, "Sub\n");
-				break;
-			case 2:
-				LOG(DEBUG, "Up\n");
-				break;
-			case 3:
-				LOG(DEBUG, "Average\n");
-				break;
-			case 4:
-				LOG(DEBUG, "Paeth\n");
-				for(int j = 1; j < scanwidth; j++)
-					{
-						// paeth algorithm
-						
-						uint8_t paeth_left, paeth_top_left, paeth_top;
-						
-						if(i == 0)
-						{
-							paeth_top = 0;
-							paeth_top_left = 0;
-						}
-						else
-						{				
-							paeth_top = prevScanline[j - 1];
-							paeth_top_left = prevScanline[j - 1 - bpp];
-						}
-
-						if(j < (bpp + 1))
-						{
-							paeth_left = 0;
-							paeth_top_left = 0;
-						}
-						else
-						{
-                                                        paeth_left = currentScanline[j - 1 - bpp];
-						}
-
-						int res = paeth_left + paeth_top - paeth_top_left;
-						int ret = 0;
-						int reconstructed = 0;
-						
-						int res_left =     abs(res - paeth_left);
-						int res_top =      abs(res - paeth_top);
-						int res_top_left = abs(res - paeth_top_left);
-
-						if((res_left <= res_top) && (res_left <= res_top_left))
-						{
-							ret =  paeth_left;
-						}
-						else if(res_top <= res_top_left)
-						{
-							ret = paeth_top ;
-						}
-						else
-						{
-							ret = paeth_top_left ;
-						}	            
-
-							reconstructed =  (outputStream[i * scanwidth + j] + ret) ;
-                                                        currentScanline[j - 1] = reconstructed &
-                                                        0xFF;
-							//fprintf(ofp, "%x", reconstructed);
-                                                        fputc(reconstructed, ofp);
-						}			
-						
-				break;
-			default:
-				LOG(ERROR, "Something is broken %d\n", filterType);
-				break;
-		}
-
-		memcpy(prevScanline, currentScanline, scanwidth - 1);		
-                /*for(int l = 0; l < scanwidth; l++)
-                {
-                    printf("0x%02x ", currentScanline[l]);
-                }
-                printf("\n");
-                */
+        FILE *decomp = fopen("outputlog.hex", "w");
+        for(int i = 0; i < scanwidth * pngData.height; i++)
+        {
+            fputc(outputStream[i], decomp);
         }
+        fclose(decomp);
+	
+        FILE *log = fopen("outputlog.ppm", "w");
+        fprintf(log, "P6\n%d %d\n%d\n", pngData.width, pngData.height, (1 << pngData.bit_depth) - 1);
 
+	for(int i = 0; i < (scanwidth - 1) * pngData.height; i++)
+	{
+            if(pngData.color_type == 6)
+            {
+                if(bpp == 8){
 
-	fclose(ofp);
+                    if((( (i + 1) % 7)!= 0) && (( (i + 1)  % 8) != 0)){
+                        fputc(defiltered[i], log);
+                    }
+                }
+                else
+                {
 
-        // inflate is complete now need to undo the filter operations
+                    if(((i + 1) % 4 != 0)){
+                        fputc(defiltered[i], log);
+                    }
+                }
+            }
+            else
+            {
+                fputc(defiltered[i], log);
+            }
+	}
 
+	fclose(log);
 
-	free(outputStream);	
-	return 0;
-
+        return 0;
 	// relax this is temporary
 exit:	
 

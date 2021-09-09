@@ -51,8 +51,7 @@ int  main(int argc, char *argv)
 {
 
     extern test_suite bitstream_suite; 
-    extern test_suite huffman_suite;
-    extern test_suite png_suite;
+    extern test_suite huffman_suite;    
     extern test_suite inflate_suite;
 
     test_results  to_date;
@@ -74,11 +73,6 @@ int  main(int argc, char *argv)
     total.num_total += to_date.num_total; 
     
     to_date = run_suite(inflate_suite);
-    total.num_passed += to_date.num_passed;
-    total.num_failed += to_date.num_failed; 
-    total.num_total += to_date.num_total; 
-
-    to_date = run_suite(png_suite);
     total.num_passed += to_date.num_passed;
     total.num_failed += to_date.num_failed; 
     total.num_total += to_date.num_total; 

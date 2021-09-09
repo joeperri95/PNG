@@ -183,6 +183,7 @@ uint64_t read_bits_big_endian(bitstream_t *bits, int N)
         bits_left -= 8;
     }
 
+    ret = ret << bits_left;
     ret += _read_bits_big_endian(bits, bits_left);
 
     return ret;

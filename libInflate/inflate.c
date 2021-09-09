@@ -31,6 +31,8 @@ uint32_t z_inflate(bitstream_t *input, unsigned char *outputStream)
                     z_uncompressed(input, outputStream, &outputLength);
                     break;
                 case 0x01:
+                    LOG(ERROR, "FIXED not yet fixed\n");
+                    exit(1);
                     z_compressed_fixed(input, outputStream, &outputLength);
                     break;
                 case 0x02:
@@ -41,6 +43,8 @@ uint32_t z_inflate(bitstream_t *input, unsigned char *outputStream)
                     return -1; 
                     break;
             };
+
+            LOG(INFO, "Output length %d\n", outputLength);
      }
 
     return outputLength;
@@ -125,6 +129,10 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
         else if (newcode < 256)
         {
             outputStream[(*outputLength)++] = newcode;
+        }
+        else if(newcode > 285)
+        {
+            LOG(ERROR, "Ivalid code found\n");
         }
         else if (newcode > 256)
         {
@@ -245,7 +253,6 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
             index++;
         }
     }
-
     
     node *len_huffman = constructHuffman(z_codes, z_num_codes_literal , 16);    
     node *len_distance = constructHuffman(z_codes + z_num_codes_literal, z_num_codes_distance, 16);
@@ -264,7 +271,11 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         else if (newcode < 256)
         {
             outputStream[(*outputLength)++] = newcode;
-            LOG(DEBUG, "%d %d lit\n",*outputLength,   newcode );
+            LOG(DEBUG_3, "%d %d lit\n",*outputLength,   newcode );
+        }
+        else if (newcode > 285)
+        {
+            LOG(ERROR, "Invalid code found\n");
         }
         else if (newcode > 256)
         {
@@ -292,7 +303,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
 
             for(int i=0; i < length; i++)
             {
-                LOG(DEBUG, "%d %d %d\n",*outputLength, *outputLength - distance,
+                LOG(DEBUG_3, "%d %d %d\n",*outputLength, *outputLength - distance,
                 outputStream[*outputLength - distance]);
                 outputStream[*outputLength] = outputStream[*outputLength - distance];
                 (*outputLength)++;
@@ -309,18 +320,16 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
 
 uint32_t z_readADLER32(bitstream_t *input)
 {
-  	// read adler32
-	// adler32 on next byte boundary as per the man himself. 
-	// https://stackoverflow.com/questions/64814734/how-does-the-compressed-data-end-at-the-byte-boundary-in-zlib-data-format
-	
-	if(input->bit_offset != 0){
-		input->bit_offset = 0;
-		input->byte_offset++;
-	}
+    // read adler32
+    // adler32 on next byte boundary as per the man himself. 
+    // https://stackoverflow.com/questions/64814734/how-does-the-compressed-data-end-at-the-byte-boundary-in-zlib-data-format
+    
+    if(input->bit_offset != 0){
+            input->bit_offset = 0;
+            input->byte_offset++;
+    }
 
     uint32_t adler = read_bits_big_endian(input, 32);
-    
-
 
     return adler;
 }

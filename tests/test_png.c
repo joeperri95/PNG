@@ -1,5 +1,5 @@
 #include "test_png.h"
-
+/*
 bool test_CRC32_IHDR()
 {
     #define MESSAGE_LEN 17
@@ -74,6 +74,13 @@ bool test_SimpleCRC()
     return false;
 }
 
+bool test_invalid_png()
+{
+
+
+}
+
+
 static test test_list[] =
 {
     {"test CRC32", test_CRC32},
@@ -87,4 +94,4 @@ extern test_suite png_suite =
     .number_of_tests = NUM_TESTS_PNG,
     .test_list = test_list,
 };
-
+*/

@@ -7,12 +7,10 @@ Turns out in building a PNG decoder you get a free gunzip implementation since g
 stream with a small header.
 
 To do functionality
-* Defiltering\
-* Ancillary chunks\
-* Pallete chunks\
-* More unit tests / CI\
-* Auto allocate memory as needed for inflate\ 
+* Ancillary chunks
+* Pallete chunks
+* More unit tests / CI
+* Auto allocate memory as needed for inflate
 
 
 Possibly someday a compressor.
-

@@ -126,12 +126,14 @@ uint32_t gzip_readFileToBuffer(const char*filename, unsigned char **buffer)
 uint32_t gzip_getCRC32(unsigned char *buffer)
 {
     uint8_t offset = 0;
-    uint32_t ret = *(buffer + offset++);
-    ret = (ret << 0x08) + *(buffer + offset++);
-    ret = (ret << 0x08) + *(buffer + offset++);
-    ret = (ret << 0x08) + *(buffer + offset++);
     
-    return ret;
+    uint32_t ret = *(buffer + offset++);
+
+    ret += (*(buffer + offset++) << 8);
+    ret += (*(buffer + offset++) << 16);
+    ret += (*(buffer + offset++) << 24);
+   
+   return ret;
 
 }
 

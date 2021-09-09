@@ -142,7 +142,6 @@ bool validateCRC(uint8_t* buffer, uint32_t length, uint32_t CRC)
     // 0001 0000 0100 1100 0001 0001 1101 1011 0111 
     
     uint32_t ret = CRC32(buffer, length);
-    printf("0x%x\n", ret);
     return ( ret == CRC);
 
 }

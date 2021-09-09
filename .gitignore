@@ -1,6 +1,4 @@
 *.o
-png
-test
 *.csv
 build/*
 .vscode/*

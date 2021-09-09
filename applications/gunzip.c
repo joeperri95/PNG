@@ -39,26 +39,26 @@ int main(int argc, char **argv)
 
     uint32_t crc = gzip_getCRC32(buffer + size - 8);
     uint32_t isize = gzip_getISIZE(buffer + size - 4);
-   
     
-    
-    create_bitstream(&c, buffer + offset, size  - offset - 8);
-
+    create_bitstream(&c, buffer + offset, size - offset);
     output = malloc(isize * sizeof(unsigned char));
 
     uint32_t len = z_inflate(&c, output);
     
     printf("CRC %u %u\nISIZE %u\n", crc, CRC32(output, isize), isize);
-    uint32_t adler = z_readADLER32(&c);
-    uint32_t adlerComputed = ADLER32(output, len);
-    
-    if(adler != adlerComputed)
+    if(CRC32(output, isize) != crc)
     {
-        LOG(WARNING, "BAD ADLER32 0x%x != 0x%x\n", adler, adlerComputed);
+        LOG(WARNING, "BAD CRC32\n");
     }
     else
     {
-        LOG(INFO, "GOOD ADLER32\n");
+        LOG(INFO, "Good CRC32\n");
+    }
+
+    if(c.bit_offset != 0)
+    {
+        c.bit_offset = 0;
+        c.byte_offset++;
     }
 
     for(int i = 0; i < len; i ++)

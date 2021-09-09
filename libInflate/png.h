@@ -1,3 +1,6 @@
+#ifndef __PNG_H__
+#define __PNG_H__
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,3 +51,5 @@ uint32_t getCRC(uint8_t *buff);
 
 // Perform CRC on chunk and compare with read value
 bool validateCRC(uint8_t* buff, uint32_t length, uint32_t CRC);
+
+#endif

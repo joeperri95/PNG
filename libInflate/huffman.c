@@ -218,7 +218,7 @@ node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
 
 void freeHuffman(node *tree)
 {
-    traverse_postorder(tree, freeNode);
+    traverse_postorder(tree,(strategy*) &freeNode);
 }
 
 

@@ -4,8 +4,6 @@
 #include "test.h"
 #include "inflate.h"
 
-#define NUM_TESTS_INFLATE 1
-
-bool test_ADLER32();
+#define NUM_TESTS_INFLATE 0
 
 #endif

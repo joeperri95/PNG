@@ -5,6 +5,7 @@ void timestamp()
 
 }
 
+
 void prefix(uint8_t level)
 {
     switch(level)
@@ -34,7 +35,6 @@ void LOG(uint8_t level, const char* message, ...)
     {
         if(level <= LOGGING_LEVEL)
         {
-            
             prefix(level); 
 
             va_list variadic_arguments;
