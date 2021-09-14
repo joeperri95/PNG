@@ -11,7 +11,7 @@
 int main(int argc, char **argv)
 {
 
-    char filename[512];
+    char filename[1024];
     if (argc > 1)
     {
             strncpy(filename, argv[1], strlen(argv[1]));
@@ -61,9 +61,15 @@ int main(int argc, char **argv)
         c.byte_offset++;
     }
 
+    FILE *ofile = fopen("decompressed", "w");
+    LOG(DEBUG, "opened file\n");
+    
     for(int i = 0; i < len; i ++)
     {
         printf("%c", output[i]);
+        fprintf(ofile, "%c", output[i]);
     }
 
+    fclose(ofile);
+    return 0;
 }

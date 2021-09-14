@@ -49,7 +49,7 @@ test_results run_suite(test_suite suite)
 
 int  main(int argc, char *argv)
 {
-
+    printf("%d\n", LOGGING_ENABLED);
     extern test_suite bitstream_suite; 
     extern test_suite huffman_suite;    
     extern test_suite inflate_suite;

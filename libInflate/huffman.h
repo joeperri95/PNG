@@ -17,6 +17,15 @@ typedef struct _node
     struct _node *right;
 } node;
 
+
+// Tree data structure
+typedef struct _tree
+{
+    node head;
+    uint32_t num_nodes;
+    uint32_t num_leaf_nodes;
+} tree;
+
 // Given a set of codes construct the huffman tree
 node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits);
 
