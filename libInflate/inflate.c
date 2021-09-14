@@ -30,9 +30,7 @@ uint32_t z_inflate(bitstream_t *input, unsigned char *outputStream)
                 case 0x00:
                     z_uncompressed(input, outputStream, &outputLength);
                     break;
-                case 0x01:
-                    LOG(ERROR, "FIXED not yet fixed\n");
-                    exit(1);
+                case 0x01:                    
                     z_compressed_fixed(input, outputStream, &outputLength);
                     break;
                 case 0x02:
@@ -74,7 +72,7 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
     const uint32_t literal_extra_bit_table[29]  =  {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
     const uint32_t literal_offset_table[29]     =  {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
     const uint32_t distance_extra_bit_table[30] =  {0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
-    const uint32_t distance_offset_table[30]    =  {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24557};
+    const uint32_t distance_offset_table[30]    =  {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577};
 
     // construct fixed huffman tree
     node *huffmanTree = createNode();     
@@ -136,32 +134,35 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
         }
         else if (newcode > 256)
         {
-            int btr = 0;
-            int check = 0;
-            uint32_t length, dlength = 0;
+            uint32_t length, distance = 0;
+            uint32_t dextra, lextra, dcode, lcode; 
             
-            int lcode = newcode - 257;
-            btr = literal_extra_bit_table[lcode];
-            length  = read_bits_little_endian(input, btr);
+            lcode = newcode - 257;
+            lextra  = read_bits_little_endian(input, literal_extra_bit_table[lcode]);
+            length = literal_offset_table[lcode] + lextra; 
 
-            LOG(DEBUG_3,"Copying %d\n", length + literal_offset_table[lcode]);
+            dcode = search(input, distanceHuffman);
+           
+            int btr =  distance_extra_bit_table[dcode];
+
+            dextra = read_bits_little_endian(input, distance_extra_bit_table[dcode]);
             
-            int dist = search(input, distanceHuffman);
-            check = distance_extra_bit_table[dist]; 
-            dlength = read_bits_little_endian(input, check);
-            
-            LOG(DEBUG_3,"Going back %d\n",  dlength + distance_offset_table[dist]);
-        
-            int startingPos = *outputLength;
-       
-            if((dlength + distance_offset_table[dist]) > startingPos){
+            distance = distance_offset_table[dcode] + dextra;
+
+            LOG(DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
+            dextra,lcode,  literal_offset_table[lcode], lextra );
+
+            if(distance > *outputLength){
                 LOG(ERROR, "Distance code too large\n"); 
             }
-           LOG(DEBUG_3, "output length %d\n", *outputLength); 
-            for(int i=0; i < length + literal_offset_table[lcode]; i++)
+
+            for(int i=0; i < length; i++)
             {
-                outputStream[(*outputLength)++] = outputStream[startingPos - (dlength + distance_offset_table[dist]) + i];
-            }        
+                LOG(DEBUG_3, "%d %d %d\n",*outputLength, *outputLength - distance,
+                outputStream[*outputLength - distance]);
+                outputStream[*outputLength] = outputStream[*outputLength - distance];
+                (*outputLength)++;
+            }              
         }
     }
     freeHuffman(huffmanTree);
@@ -173,10 +174,10 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
 {
 
     const uint32_t codedict[19]                 =  {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
-    const uint32_t literal_extra_bit_table[29]  =  {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
-    const uint32_t literal_offset_table[29]     =  {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
+    const uint32_t literal_extra_bit_table[30]  =  {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0, 127};
+    const uint32_t literal_offset_table[30]     =  {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0};
     const uint32_t distance_extra_bit_table[30] =  {0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
-    const uint32_t distance_offset_table[30]    =  {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24557};
+    const uint32_t distance_offset_table[30]    =  {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577};
     uint32_t codes[19]                          =  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
     uint32_t *z_codes;
@@ -188,23 +189,21 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
     LOG(INFO, "distance codes %d\n", z_num_codes_distance);
     LOG(INFO, "huffman codes %d\n", z_num_codes_huffman);     
 
-    for (int i = 0; i < z_num_codes_huffman; i++)
+    for(int i = 0; i < z_num_codes_huffman; i++)
     {
         codes[i] = read_bits_little_endian(input, 3);
-        LOG(DEBUG_1, "num %d code %d\n", codedict[i], codes[i]);
+        LOG(DEBUG_1, "num %d code %d\n", codedict[i], codes[i]); 
     }
 
-    
-    //resort the codes
     uint32_t sorted[19];
-    memset(sorted, -1, 19 * sizeof(uint32_t)); 
-    
+    memset(sorted, -1, 19 * sizeof(uint32_t));
+
     for(int i = 0; i < 19; i++)
     {
         sorted[codedict[i]] = codes[i];
     }
 
-    node *huffmantree = constructHuffman(sorted, 19, 8);
+    node *huffmantree = constructHuffman(sorted, 19,8);
 
     uint32_t code;    
     uint8_t extra = 0;
@@ -271,7 +270,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         else if (newcode < 256)
         {
             outputStream[(*outputLength)++] = newcode;
-            LOG(DEBUG_3, "%d %d lit\n",*outputLength,   newcode );
+            LOG(DEBUG_3, "%d %d %c lit\n",*outputLength, newcode, newcode );
         }
         else if (newcode > 285)
         {
@@ -287,23 +286,21 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
             length = literal_offset_table[lcode] + lextra; 
 
             dcode = search(input, len_distance);
-           
-            int btr =  distance_extra_bit_table[dcode];
-
             dextra = read_bits_little_endian(input, distance_extra_bit_table[dcode]);
-            
             distance = distance_offset_table[dcode] + dextra;
-
+            
+            if(dcode >= 29){
             LOG(DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
             dextra,lcode,  literal_offset_table[lcode], lextra );
-
+}
             if(distance > *outputLength){
                 LOG(ERROR, "Distance code too large\n"); 
             }
 
             for(int i=0; i < length; i++)
             {
-                LOG(DEBUG_3, "%d %d %d\n",*outputLength, *outputLength - distance,
+                if(dcode >= 29)
+                LOG(DEBUG_3, "%d %d %c\n",*outputLength, *outputLength - distance,
                 outputStream[*outputLength - distance]);
                 outputStream[*outputLength] = outputStream[*outputLength - distance];
                 (*outputLength)++;
