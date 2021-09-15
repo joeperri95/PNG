@@ -1,7 +1,7 @@
 
 CC = gcc
 BUILDDIR = ../build
-CFLAGS =
+CFLAGS = 
 
 all: libs
 	@:

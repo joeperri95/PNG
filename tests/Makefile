@@ -1,7 +1,7 @@
 CC = gcc
 TEST_EXE = test
 BUILDDIR = ../build
-CFLAGS = -I../libInflate -I.
+CFLAGS = -I../libInflate -I. -D'LOGGING_ENABLED=false'
 OBJECTS = 
 
 all: tests

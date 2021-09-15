@@ -9,11 +9,14 @@ BUILDDIR = build
 APPSDIR = applications
 CFLAGS = -IlibInflate
 
-all: pre_build png gunzip crc32 adler32
+all: pre_build png gunzip crc32 adler32 post_build
     @:
 
 pre_build:
 	mkdir -p $(BUILDDIR)
+
+post_build:
+	echo "Build complete"
 
 crc32: clean libs $(BUILDDIR)/crc32.o 
 	cd $(BUILDDIR) && $(CC) $(CFLAGS) crc32.o checksum.o fileutils.o logging.o -o $(CRC_EXE) 
@@ -36,7 +39,6 @@ libs: clean
 debug: CFLAGS += -g
 debug: all
 	@:
-
 tests: clean 
 	cd tests && $(MAKE)
 

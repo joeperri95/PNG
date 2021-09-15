@@ -50,7 +50,10 @@ int main(int argc, char **argv)
 	uint8_t *chunkBuffer = (uint8_t *)malloc(sizeof(uint8_t *));
 	uint8_t *crcBuffer = (uint8_t *)malloc(sizeof(uint8_t *));
 	uint32_t dataLength = 0;
-	
+
+
+        // This could be sped up 
+        // Should also be moved to the lib
 	while(!png_quit){
 		chunkLength = getChunkLength(pngBuffer + offset);
 	        LOG(DEBUG, "chunk length %d\n", chunkLength);
@@ -72,12 +75,70 @@ int main(int argc, char **argv)
 			dataLength += chunkLength;
 			dataStream = realloc(dataStream, dataLength * sizeof(uint8_t));
 			memcpy(dataStream + (dataLength - chunkLength), chunkBuffer, chunkLength);
-			//getChunkData(pngBuffer + offset, chunkLength, dataStream + (dataLength - chunkLength));
 		}
                 else if(strncmp(chunkType, "sRGB", 4) == 0)
                 {
-                    LOG(ERROR, "SRGB Not implemented\n");
-                    exit(1);
+                    LOG(WARNING, "SRGB Not implemented\n");
+                }
+                else if(strncmp(chunkType, "iTXt", 4) == 0)
+                {
+                    LOG(WARNING, "Not yet complete\n");
+                    // Not sure if deflate or zlib
+                    uint32_t offset = 0;
+                    int keyLength = strlen(chunkBuffer);
+                    offset += keyLength + 1;
+                   
+                    bool compression = *(chunkBuffer + offset++);
+                    uint8_t compressionMethod = *(chunkBuffer + offset++);
+                    char *language;
+                   
+                    // if there is a language tag include it.
+                    if(strlen(chunkBuffer + offset) != 0){
+                        strcpy(language, chunkBuffer + offset);
+                        offset += strlen(language);
+                    }
+                    else
+                    {
+                        offset++;
+                    }
+                    
+                    // print the keyword first
+                    LOG(INFO, "%s: ", chunkBuffer);
+                    
+                    // There may be null characters in the string
+                    for(int i = offset; i < chunkLength; i++)
+                    {
+                        printf("%c", chunkBuffer[i]);
+                    }
+                    printf("\n");
+
+                }
+                else if(strncmp(chunkType, "tEXt", 4) == 0)
+                {
+                    int keyLength = strlen(chunkBuffer);
+                    LOG(INFO, "%s: %.*s\n", chunkBuffer, chunkLength - keyLength - 1, chunkBuffer + keyLength + 1);
+                }
+                else if(strncmp(chunkType, "zTXt", 4) == 0)
+                {
+                    LOG(WARNING, "Not yet complete\n");
+
+                    // Not sure if deflate or zlib
+                    uint32_t offset = 0;
+                    int keyLength = strlen(chunkBuffer);
+                    offset += keyLength + 1;
+                    
+                    // Compression method but currently only deflate
+                    uint8_t compressionMethod = *(chunkBuffer + offset++); 
+                    uint8_t *outputMessage = malloc(1024 *sizeof(uint8_t)); 
+                    bitstream_t message;
+
+                    create_bitstream(&message, chunkBuffer + offset, chunkLength - offset); 
+                    z_inflate(&message, outputMessage);
+
+                    LOG(INFO, "%s: %s\n", chunkBuffer, outputMessage);
+
+                    delete_bitstream(&message);
+                    free(outputMessage);
                 }
 		else if(strncmp(chunkType, "IEND", 4) == 0)
 		{
@@ -182,15 +243,15 @@ int main(int argc, char **argv)
     
 	delete_bitstream(&b);
 
-
 	uint8_t *defiltered = malloc(pngData.height * pngData.width * bpp);
 	defilter( defiltered , outputStream, pngData);
 	
         FILE *decomp = fopen("outputlog.hex", "w");
         for(int i = 0; i < scanwidth * pngData.height; i++)
         {
-            fputc(outputStream[i], decomp);
+           fputc(outputStream[i], decomp);
         }
+        
         fclose(decomp);
 	
         FILE *log = fopen("outputlog.ppm", "w");
