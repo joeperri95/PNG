@@ -31,7 +31,7 @@ void defilter(uint8_t *outputBuffer, uint8_t *buffer, pngMetaData params)
 		break;
 
 		default:
-                        LOG(ERROR, "Invalid PNG color type\n");
+                        LOG(glog, ERROR, "Invalid PNG color type\n");
                 break;
 	}
 
@@ -40,7 +40,7 @@ void defilter(uint8_t *outputBuffer, uint8_t *buffer, pngMetaData params)
     int offset = 0;
     int outputOffset = 0;
     
-    LOG(DEBUG, "BPP: %d\n", bpp);    
+    LOG(glog, DEBUG, "BPP: %d\n", bpp);    
    
     uint8_t *prevScanline = malloc(width);
     uint8_t *scanline = malloc(width);
@@ -57,27 +57,27 @@ void defilter(uint8_t *outputBuffer, uint8_t *buffer, pngMetaData params)
         switch(filter_type)
         {
             case FILTER_TYPE_NONE:
-                LOG(DEBUG_1, "Filter type NONE\n");
+                LOG(glog, DEBUG_1, "Filter type NONE\n");
                 filter_none(outputBuffer + outputOffset, width, scanline);
             break;
             case FILTER_TYPE_SUB:
-                LOG(DEBUG_1, "Filter type SUB\n");
+                LOG(glog, DEBUG_1, "Filter type SUB\n");
                 filter_sub(outputBuffer + outputOffset, width, scanline, bpp);
             break;
             case FILTER_TYPE_UP:
-                LOG(DEBUG_1, "Filter type UP\n");                
+                LOG(glog, DEBUG_1, "Filter type UP\n");                
                 filter_up(outputBuffer + outputOffset, width, scanline, prevScanline);
             break;
             case FILTER_TYPE_AVERAGE:
-                LOG(DEBUG_1, "Filter type AVERAGE\n");
+                LOG(glog, DEBUG_1, "Filter type AVERAGE\n");
                 filter_average(outputBuffer + outputOffset, width, scanline, prevScanline, bpp);
             break;
             case FILTER_TYPE_PAETH:
-                LOG(DEBUG_1, "Filter type PAETH\n");
+                LOG(glog, DEBUG_1, "Filter type PAETH\n");
                 filter_paeth(outputBuffer + outputOffset, width, scanline, prevScanline, bpp);
             break;
             default:
-                LOG(ERROR, "Invalid filter type: %d\n", filter_type);
+                LOG(glog, ERROR, "Invalid filter type: %d\n", filter_type);
             break;
         }
         outputOffset += width;

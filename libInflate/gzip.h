@@ -1,12 +1,22 @@
 #ifndef __GZIP_H__
 #define __GZIP_H__
 
+// gzip.h
+/*
+    A module for handling the metatdata surrounding gzip files.
+*/
+
+// Includes
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "inflate.h"
 #include "logging.h"
+#include "fileutils.h"
 
+// Data structures
+
+/* The metadata contained in a gzip header */
 typedef struct _gzipMetaData
 {
     uint32_t modified_time;
@@ -18,12 +28,18 @@ typedef struct _gzipMetaData
 
 } gzipMetaData;
 
-bool gzip_validateFile(FILE *fp);
+// Public Functions
 
-gzipMetaData gzip_processHeader(unsigned char* buffer);
-uint32_t gzip_readFileToBuffer(const char*filename, unsigned char **buffer);
+/* Ensure that the gzip magic numbers are present at the start of the file. */
+bool gzip_validate_file(FILE *fp);
 
-uint32_t gzip_getCRC32(unsigned char *buffer);
-uint32_t gzip_getISIZE(unsigned char *buffer);
+/* Parse the information associated with the gzip file */
+gzipMetaData gzip_process_header(unsigned char* buffer);
+
+/* Return the CRC32 attached to the end of the file */
+uint32_t gzip_get_CRC32(unsigned char *buffer);
+
+/* Return the uncompressed size attached to the end of the file */
+uint32_t gzip_get_ISIZE(unsigned char *buffer);
 
 #endif

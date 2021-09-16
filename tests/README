@@ -1,0 +1,12 @@
+The test framework
+
+TODO
+
+* Image defiltering tests
+* Bitstream test for both big and little endian
+* Tests for freeing data structures
+* Tests for each chunk handler function
+* Tests for file utils
+* Tests for gzip 
+* Application tests
+* Get logging to log to a file so I can read back ERRORs, warnings, etc.

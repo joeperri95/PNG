@@ -1,6 +1,6 @@
 #include "gzip.h"
 
-bool gzip_validateFile(FILE *fp)
+bool gzip_validate_file(FILE *fp)
 {
     unsigned char ID1 = fgetc(fp);        
     unsigned char ID2 = fgetc(fp);       
@@ -16,7 +16,7 @@ bool gzip_validateFile(FILE *fp)
 
 }
 
-gzipMetaData gzip_processHeader(unsigned char* buffer)
+gzipMetaData gzip_process_header(unsigned char* buffer)
 {
     gzipMetaData gzipData;
     uint32_t offset = 0;
@@ -74,56 +74,17 @@ gzipMetaData gzip_processHeader(unsigned char* buffer)
 
     gzipData.header_size = offset;
 
-    LOG(INFO, "Compression type %d\n", gzipData.compression_method);
-    LOG(INFO, "Flags %d\n", gzipData.flags);
-    LOG(INFO, "Modified %d\n", gzipData.modified_time);
-    LOG(INFO, "Extra flags %d\n", gzipData.extraflags);
-    LOG(INFO, "OS %d\n", gzipData.os);
-    LOG(INFO, "Header size %d\n", gzipData.header_size);
+    LOG(glog, INFO, "Compression type %d\n", gzipData.compression_method);
+    LOG(glog, INFO, "Flags %d\n", gzipData.flags);
+    LOG(glog, INFO, "Modified %d\n", gzipData.modified_time);
+    LOG(glog, INFO, "Extra flags %d\n", gzipData.extraflags);
+    LOG(glog, INFO, "OS %d\n", gzipData.os);
+    LOG(glog, INFO, "Header size %d\n", gzipData.header_size);
 
     return gzipData;
 }
 
-uint32_t gzip_readFileToBuffer(const char*filename, unsigned char **buffer)
-{
-
-    FILE *fp = fopen(filename, "rb");
-    long filesize = 0;
-    size_t numread;
-    if(fp != NULL)
-    {
-        if(fseek(fp, 0, SEEK_END) == 0)
-        {
-            //get file size
-            filesize = ftell(fp);
-            if(filesize == -1)
-                LOG(ERROR, "Could not determine filesize\n");
-
-            fseek(fp, 0, SEEK_SET);
-          
-            // allocate memory
-            *buffer = (unsigned char*) malloc(sizeof(unsigned char) * (filesize + 1));
-            
-            // read file to buf
-             numread = fread(*buffer, sizeof(unsigned char), filesize, fp);
-            *(*buffer + numread + 1) = '\0';
-
-        }
-        else
-        {
-           LOG(ERROR, "Could not find end of file\n");
-        }
-    }
-    else
-    {
-        LOG(ERROR, "Could not open file\n");
-    }
-
-    fclose(fp);
-    return numread;
-}
-
-uint32_t gzip_getCRC32(unsigned char *buffer)
+uint32_t gzip_get_CRC32(unsigned char *buffer)
 {
     uint8_t offset = 0;
     
@@ -137,7 +98,7 @@ uint32_t gzip_getCRC32(unsigned char *buffer)
 
 }
 
-uint32_t gzip_getISIZE(unsigned char *buffer){
+uint32_t gzip_get_ISIZE(unsigned char *buffer){
 
     uint8_t offset = 0;
     uint32_t ret = *(buffer + offset++);

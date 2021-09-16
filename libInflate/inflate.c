@@ -1,6 +1,6 @@
 #include "inflate.h"
 
-zlibMetaData z_processHeader(bitstream_t *input)
+zlibMetaData process_zlib_header(bitstream_t *input)
 {
     zlibMetaData z_data;
     z_data.compression_method = read_bits_little_endian(input, 4);
@@ -12,7 +12,7 @@ zlibMetaData z_processHeader(bitstream_t *input)
     return z_data;
 }
 
-uint32_t z_inflate(bitstream_t *input, unsigned char *outputStream)
+uint32_t inflate(bitstream_t *input, unsigned char *outputStream)
 {
     uint8_t z_final = 0;
     uint8_t z_compression_type;
@@ -23,32 +23,32 @@ uint32_t z_inflate(bitstream_t *input, unsigned char *outputStream)
             z_final = read_bits_little_endian(input, 1);
             z_compression_type = read_bits_little_endian(input , 2);
 
-            LOG(INFO, "final block %d\n", z_final);
-            LOG(INFO, "compression type %d\n", z_compression_type);
+            LOG(glog, INFO, "final block %d\n", z_final);
+            LOG(glog, INFO, "compression type %d\n", z_compression_type);
             switch(z_compression_type)
             {
-                case 0x00:
-                    z_uncompressed(input, outputStream, &outputLength);
+                case COMPRESSION_METHOD_NONE:
+                    uncompressed(input, outputStream, &outputLength);
                     break;
-                case 0x01:                    
-                    z_compressed_fixed(input, outputStream, &outputLength);
+                case COMPRESSION_METHOD_FIXED:                    
+                    compressed_fixed(input, outputStream, &outputLength);
                     break;
-                case 0x02:
-                    z_compressed_dynamic(input, outputStream, &outputLength);
+                case COMPRESSION_METHOD_DYNAMIC:
+                    compressed_dynamic(input, outputStream, &outputLength);
                     break;
                 default:
-                    LOG(ERROR, "invalid compression type %d\n",z_compression_type);
+                    LOG(glog, ERROR, "invalid compression type %d\n",z_compression_type);
                     return -1; 
                     break;
             };
 
-            LOG(INFO, "Output length %d\n", outputLength);
+            LOG(glog, INFO, "Output length %d\n", outputLength);
      }
 
     return outputLength;
 }
 
-void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength)
+void uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength)
 {
     
     if(input->bit_offset != 0){ 
@@ -66,7 +66,7 @@ void z_uncompressed(bitstream_t *input, unsigned char *outputStream, uint32_t *o
     }
 }
 
-void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength)
+void compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_t *outputLength)
 {
 
     const uint32_t literal_extra_bit_table[29]  =  {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
@@ -75,42 +75,42 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
     const uint32_t distance_offset_table[30]    =  {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577};
 
     // construct fixed huffman tree
-    node *huffmanTree = createNode();     
+    node *huffmanTree = create_node();     
     uint16_t code = 0x30; 
 
     for(int i = 0; i < 144; i++)
     {
-        insertCode(huffmanTree, code, 8, i);
+        insert_code(huffmanTree, code, 8, i);
         code++;
     }
 
     code = 0x190;
     for(int i = 144; i < 256; i++)
     {
-        insertCode(huffmanTree, code, 9, i);
+        insert_code(huffmanTree, code, 9, i);
         code++;
     }
 
     code = 0x00;
     for(int i = 256; i < 280; i++)
     {
-        insertCode(huffmanTree, code, 7, i);
+        insert_code(huffmanTree, code, 7, i);
         code++;
     }
 
     code = 0xC0;
     for(int i = 280; i <= 287; i++)
     {
-        insertCode(huffmanTree, code, 8, i);
+        insert_code(huffmanTree, code, 8, i);
         code++;
     }
 
     // construct distance tree
-    node *distanceHuffman = createNode(); 
+    node *distanceHuffman = create_node(); 
 
     for(int i = 0; i < 32; i++)
     {
-        insertCode(distanceHuffman, i, 5, i);
+        insert_code(distanceHuffman, i, 5, i);
     }
 
     int newcode = 0;            
@@ -121,7 +121,7 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
                 
         if (newcode == -1)
         {
-                LOG(ERROR,"lost the code \n");
+                LOG(glog, ERROR,"lost the code \n");
                 return;
         }
         else if (newcode < 256)
@@ -130,7 +130,7 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
         }
         else if(newcode > 285)
         {
-            LOG(ERROR, "Ivalid code found\n");
+            LOG(glog, ERROR, "Ivalid code found\n");
         }
         else if (newcode > 256)
         {
@@ -149,28 +149,27 @@ void z_compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_
             
             distance = distance_offset_table[dcode] + dextra;
 
-            LOG(DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
+            LOG(glog, DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
             dextra,lcode,  literal_offset_table[lcode], lextra );
 
             if(distance > *outputLength){
-                LOG(ERROR, "Distance code too large\n"); 
+                LOG(glog, ERROR, "Distance code too large\n"); 
             }
 
             for(int i=0; i < length; i++)
             {
-                LOG(DEBUG_3, "%d %d %d\n",*outputLength, *outputLength - distance,
+                LOG(glog, DEBUG_3, "%d %d %d\n",*outputLength, *outputLength - distance,
                 outputStream[*outputLength - distance]);
                 outputStream[*outputLength] = outputStream[*outputLength - distance];
                 (*outputLength)++;
             }              
         }
     }
-    freeHuffman(huffmanTree);
-    freeHuffman(distanceHuffman);
+    free_huffman(huffmanTree);
+    free_huffman(distanceHuffman);
 }
 
-
-void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_t *outputLength)
+void compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_t *outputLength)
 {
 
     const uint32_t codedict[19]                 =  {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
@@ -185,14 +184,14 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
     uint32_t z_num_codes_distance = 1 + read_bits_little_endian(input, 5);
     uint32_t z_num_codes_huffman = 4 + read_bits_little_endian(input, 4);
 
-    LOG(INFO, "literal codes %d\n", z_num_codes_literal);
-    LOG(INFO, "distance codes %d\n", z_num_codes_distance);
-    LOG(INFO, "huffman codes %d\n", z_num_codes_huffman);     
+    LOG(glog, INFO, "literal codes %d\n", z_num_codes_literal);
+    LOG(glog, INFO, "distance codes %d\n", z_num_codes_distance);
+    LOG(glog, INFO, "huffman codes %d\n", z_num_codes_huffman);     
 
     for(int i = 0; i < z_num_codes_huffman; i++)
     {
         codes[i] = read_bits_little_endian(input, 3);
-        LOG(DEBUG_1, "num %d code %d\n", codedict[i], codes[i]); 
+        LOG(glog, DEBUG_1, "num %d code %d\n", codedict[i], codes[i]); 
     }
 
     uint32_t sorted[19];
@@ -203,7 +202,7 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         sorted[codedict[i]] = codes[i];
     }
 
-    node *huffmantree = constructHuffman(sorted, 19,8);
+    node *huffmantree = construct_huffman(sorted, 19,8);
 
     uint32_t code;    
     uint8_t extra = 0;
@@ -253,8 +252,8 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         }
     }
     
-    node *len_huffman = constructHuffman(z_codes, z_num_codes_literal , 16);    
-    node *len_distance = constructHuffman(z_codes + z_num_codes_literal, z_num_codes_distance, 16);
+    node *len_huffman = construct_huffman(z_codes, z_num_codes_literal , 16);    
+    node *len_distance = construct_huffman(z_codes + z_num_codes_literal, z_num_codes_distance, 16);
 
     int newcode = 0;            
 
@@ -264,17 +263,17 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
         
         if (newcode == -1)
         {
-                LOG(ERROR,"lost the code \n");
+                LOG(glog, ERROR,"lost the code \n");
                 return;
         }
         else if (newcode < 256)
         {
             outputStream[(*outputLength)++] = newcode;
-            LOG(DEBUG_3, "%d %d %c lit\n",*outputLength, newcode, newcode );
+            LOG(glog, DEBUG_3, "%d %d %c lit\n",*outputLength, newcode, newcode );
         }
         else if (newcode > 285)
         {
-            LOG(ERROR, "Invalid code found\n");
+            LOG(glog, ERROR, "Invalid code found\n");
         }
         else if (newcode > 256)
         {
@@ -290,17 +289,17 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
             distance = distance_offset_table[dcode] + dextra;
             
             if(dcode >= 29){
-            LOG(DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
+            LOG(glog, DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
             dextra,lcode,  literal_offset_table[lcode], lextra );
 }
             if(distance > *outputLength){
-                LOG(ERROR, "Distance code too large\n"); 
+                LOG(glog, ERROR, "Distance code too large\n"); 
             }
 
             for(int i=0; i < length; i++)
             {
                 if(dcode >= 29)
-                LOG(DEBUG_3, "%d %d %c\n",*outputLength, *outputLength - distance,
+                LOG(glog, DEBUG_3, "%d %d %c\n",*outputLength, *outputLength - distance,
                 outputStream[*outputLength - distance]);
                 outputStream[*outputLength] = outputStream[*outputLength - distance];
                 (*outputLength)++;
@@ -309,13 +308,13 @@ void z_compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint3
     }
 
     free(z_codes);
-    freeHuffman(len_huffman);
-    freeHuffman(len_distance);
-    freeHuffman(huffmantree);
+    free_huffman(len_huffman);
+    free_huffman(len_distance);
+    free_huffman(huffmantree);
 
 }
 
-uint32_t z_readADLER32(bitstream_t *input)
+uint32_t read_ADLER32(bitstream_t *input)
 {
     // read adler32
     // adler32 on next byte boundary as per the man himself. 

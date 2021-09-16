@@ -7,7 +7,7 @@ CRC_EXE = crc32
 ADLER_EXE = adler32
 BUILDDIR = build
 APPSDIR = applications
-CFLAGS = -IlibInflate
+CFLAGS = -IlibInflate -Wall
 
 all: pre_build png gunzip crc32 adler32 post_build
     @:
@@ -25,10 +25,10 @@ adler32: clean libs $(BUILDDIR)/adler32.o
 	cd $(BUILDDIR) && $(CC) $(CFLAGS) adler32.o checksum.o fileutils.o logging.o -o $(ADLER_EXE) 
 
 png: clean libs $(BUILDDIR)/png_decode.o 
-	cd $(BUILDDIR) && $(CC) $(CFLAGS) png_decode.o image.o checksum.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(EXE)
+	cd $(BUILDDIR) && $(CC) $(CFLAGS) png_decode.o image.o fileutils.o checksum.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(EXE)
 
 gunzip: clean libs $(BUILDDIR)/gunzip.o
-	cd $(BUILDDIR) && $(CC) $(CFLAGS) gunzip.o checksum.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(GUNZIP_EXE) 
+	cd $(BUILDDIR) && $(CC) $(CFLAGS) gunzip.o checksum.o fileutils.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o $(GUNZIP_EXE) 
 
 # just build all object files
 libs: clean 

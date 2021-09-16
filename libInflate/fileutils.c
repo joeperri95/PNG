@@ -13,12 +13,12 @@ int64_t get_file_length(const char *filename)
         }
         else
         {
-            LOG(ERROR, "Could not find end of file\n");
+            LOG(glog, ERROR, "Could not find end of file\n");
         }
     }
     else
     {
-        LOG(ERROR, "Could not open file\n");
+        LOG(glog, ERROR, "Could not open file\n");
     }
     
     fclose(fp);
@@ -29,7 +29,7 @@ void read_file_to_buffer(const char *filename, uint8_t **buf)
 {
 
     int64_t filelength =  get_file_length(filename);
-    LOG(DEBUG, "file length %d\n", filelength);
+    LOG(glog, DEBUG, "file length %d\n", filelength);
  
     FILE *fp = fopen(filename, "rb");
 
@@ -38,13 +38,13 @@ void read_file_to_buffer(const char *filename, uint8_t **buf)
         *buf = (uint8_t *) malloc(sizeof(uint8_t) * (filelength + 1));
         if(*buf == NULL)
         {
-            LOG(ERROR, "Could not allocate memory\n");
+            LOG(glog, ERROR, "Could not allocate memory\n");
         }
         size_t numread = fread(*buf, sizeof(uint8_t), filelength, fp); 
         *(*buf + numread + 1) = '\0';
     }
     else
     {
-        LOG(ERROR, "Could not open file\n");
+        LOG(glog, ERROR, "Could not open file\n");
     }
 }

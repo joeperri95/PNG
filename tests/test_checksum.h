@@ -7,6 +7,10 @@
 
 #define NUM_TESTS_CHECKSUM 1
 
-bool test_ADLER32();
+bool test_CRC32();
+bool test_CRC16();
+
+bool test_ADLER32_short();
+bool test_ADLER32_long();
 
 #endif

@@ -1,11 +1,20 @@
 #ifndef __LOGGING_H__
 #define __LOGGING_H__
 
+// logging.h
+/*
+    A utility logging library
+*/
+
+// Includes
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
 
+// Constants
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -36,13 +45,30 @@
 #endif
 
 // LOGGING_ENABLED and LOGGING_LEVEL can also be defined in the makefile
-
-
 // TODO turn this into a real library with timestamps, file logging and ANSI color codes
 
 #define LOG_FILE "/dev/stdout"
 
-void LOG(uint8_t level, const char* message, ...);
+// Data Structures
 
+typedef void (*func)(uint8_t level, const char *message, ...);
+
+typedef struct _logger
+{
+    const char* filename;
+    FILE *log_file;
+    uint8_t level;
+    bool enabled;    
+} logger;
+
+logger *glog;
+
+// Public Functions
+
+logger *create_logger( const char* logfile, int level); 
+void destroy_logger(logger *logger_handle);
+void LOG(logger *logger_handle, uint8_t level, const char* message, ...);
+
+// Private Functions
 
 #endif

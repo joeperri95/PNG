@@ -68,7 +68,7 @@ uint8_t _read_bits_big_endian(bitstream_t *bits, int N)
 
     }
 
-    LOG(10, "bits read %d\n", bits->bit_offset + bits->byte_offset * 8);
+    LOG(glog, 10, "bits read %d\n", bits->bit_offset + bits->byte_offset * 8);
     return ret;
 
 }
@@ -124,7 +124,7 @@ uint8_t _read_bits_little_endian(bitstream_t *bits, int N)
 
     }
 
-    LOG(10, "bits read %d\n", bits->bit_offset + bits->byte_offset * 8);
+    LOG(glog, 10, "bits read %d\n", bits->bit_offset + bits->byte_offset * 8);
     return ret;
 
 }
@@ -134,7 +134,7 @@ uint64_t read_bits_little_endian(bitstream_t *bits, int N)
 
     if(N > 64)
     {
-        LOG(ERROR, "Can only read up to 64 bits\n");
+        LOG(glog, ERROR, "Can only read up to 64 bits\n");
         return 0XFFFFFFFF;
     }
     else if(N == 0)
@@ -164,7 +164,7 @@ uint64_t read_bits_big_endian(bitstream_t *bits, int N)
 
     if(N > 64)
     {
-        LOG(ERROR, "Can only read up to 64 bits\n");
+        LOG(glog, ERROR, "Can only read up to 64 bits\n");
         return 0XFFFFFFFF;
     }
     else if(N == 0)

@@ -7,9 +7,15 @@
 
 #define NUM_TESTS_PNG 0
 
-// these are checksum tests move them
-bool test_CRC32();
-bool test_CRC32_IHDR();
-bool test_SimpleCRC();
+
+bool test_valid_png();
+bool test_invalid_png();
+bool test_read_header();
+bool test_get_unknown_chunk();
+bool test_get_chunk_length();
+bool test_validate_crc32();
+bool test_get_chunk_type();
+bool test_chunk_order();
+bool test_process_chunk();
 
 #endif

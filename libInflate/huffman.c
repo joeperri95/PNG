@@ -1,6 +1,6 @@
 #include "huffman.h"
 
-node *createNode()
+node *create_node()
 {
 
     node *newNode =(node *)  malloc(sizeof(node)); 
@@ -12,12 +12,12 @@ node *createNode()
     return newNode;
 }
 
-void freeNode(node *node)
+void free_node(node *node)
 {
     free(node);
 }
 
-void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
+void insert_code(node *tree, uint32_t code, uint32_t length, uint32_t data)
 {
     /*
     Code is the huffman code to insert. Since there may be prefixed zeros the length parameter has also been added to specify length of the code.
@@ -40,7 +40,7 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
 
    if(length > 100)
    {       
-       LOG(ERROR, "code %d data %d length %d LENGTH CODE TOO LONG\n",code, data, length);
+       LOG(glog, ERROR, "code %d data %d length %d LENGTH CODE TOO LONG\n",code, data, length);
        return;
    }
 
@@ -66,7 +66,7 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
             str[i - 1] = '0';
             if (currentNode->left == NULL)
             {                     
-                currentNode->left = createNode();
+                currentNode->left = create_node();
                 currentNode = currentNode->left;
             }
             else
@@ -80,7 +80,7 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
             str[i - 1] = '1';
             if (currentNode->right == NULL)
             {                                
-                currentNode->right = createNode();
+                currentNode->right = create_node();
                 currentNode = currentNode->right;
             }
             else
@@ -99,14 +99,14 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
         str[length - 1] = '0';
         if (currentNode->left == NULL)
         {
-            currentNode->left = createNode(); 
+            currentNode->left = create_node(); 
             currentNode = currentNode->left;
             currentNode->data = data;
             
         }
         else
         {
-            LOG(ERROR, "Node is already inserted\n");
+            LOG(glog, ERROR, "Node is already inserted\n");
             // Node is already inserted
         }
     }
@@ -116,23 +116,23 @@ void insertCode(node *tree, uint32_t code, uint32_t length, uint32_t data)
         str[length - 1] = '1';
         if (currentNode->right == NULL)
         {
-            currentNode->right = createNode();
+            currentNode->right = create_node();
             currentNode = currentNode->right;
             currentNode->data = data;
         }
         else
         {
-            LOG(ERROR, "Node is already inserted\n");
+            LOG(glog, ERROR, "Node is already inserted\n");
             // Node is already inserted
         }
     }    
 
     str[length + 1] = '\0';
 
-    LOG(DEBUG_2, "%s code %d data %d length %d \n", str,  code ,currentNode->data, length);        
+    LOG(glog, DEBUG_2, "%s code %d data %d length %d \n", str,  code ,currentNode->data, length);        
 }
 
-uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
+uint32_t search_code(node *tree, uint32_t code, uint32_t length)
 {
 
     uint32_t shift = length;
@@ -151,7 +151,7 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
         
         if (currentNode == NULL)
         {
-            LOG(WARNING, "node not found\n");
+            LOG(glog, WARNING, "node not found\n");
             return 0xFFFFFFFF;
         }
     }
@@ -160,7 +160,7 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
     {
         // Not a leaf node
         // printf("not a leaf node\n");
-        //LOG(WARNING, "not a leaf node\n");
+        //LOG(glog, WARNING, "not a leaf node\n");
         return 0xFFFFFFFF; 
     }
 
@@ -168,10 +168,10 @@ uint32_t searchCode(node *tree, uint32_t code, uint32_t length)
     return currentNode->data;
 }
 
-node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
+node *construct_huffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
 {
 
-    node *huffman_tree = createNode();
+    node *huffman_tree = create_node();
 
 #define MAX_HUFFMAN_SIZE 100
     uint32_t depths[MAX_HUFFMAN_SIZE];
@@ -201,7 +201,7 @@ node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
         left <<= 1;                     
         left -= depths[len];          
         if (left < 0)
-            LOG(ERROR, "%d OH NO!!!\n", len);
+            LOG(glog, ERROR, "%d OH NO!!!\n", len);
     }
 
     for (int n = 0; n < length; n++)
@@ -209,16 +209,16 @@ node *constructHuffman(uint32_t *codes, uint32_t length, uint32_t max_bits)
         int len = codes[n];
         if (len != 0 && len != -1)
         {
-            insertCode(huffman_tree, next_codes[len], len, n);
+            insert_code(huffman_tree, next_codes[len], len, n);
             next_codes[len]++;
         }
     }
     return huffman_tree;
 }
 
-void freeHuffman(node *tree)
+void free_huffman(node *tree)
 {
-    traverse_postorder(tree,(strategy*) &freeNode);
+    traverse_postorder(tree,(strategy*) &free_node);
 }
 
 
@@ -226,18 +226,18 @@ uint32_t search(bitstream_t *b, node *tree)
 {
     uint32_t runlen = 1;
     uint32_t lencode = read_bits_big_endian(b, 1);
-    uint32_t newcode = searchCode(tree, lencode, runlen);
+    uint32_t newcode = search_code(tree, lencode, runlen);
     
     while (newcode == 0xFFFFFFFF && runlen < 16)
     {
             runlen++;
             uint32_t len_buffer = read_bits_big_endian(b, 1);
             lencode = (lencode << 0x01) + len_buffer;
-            newcode = searchCode(tree, lencode , runlen);
+            newcode = search_code(tree, lencode , runlen);
             //printNbits(lencode, runlen);
     }
 
-    LOG(9, "length: %d val: %d code %d\n", runlen, newcode, lencode);
+    LOG(glog, 9, "length: %d val: %d code %d\n", runlen, newcode, lencode);
     //printNbits(lencode, runlen);
 
     return newcode;

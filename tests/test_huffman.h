@@ -17,4 +17,10 @@ bool test_search_right();
 bool test_search_non_leaf();
 bool test_search_multiple();
 
+bool test_free_huffman();
+bool test_traverse_in_order();
+bool test_traverse_pre_order();
+bool test_traverse_post_order();
+
+
 #endif
