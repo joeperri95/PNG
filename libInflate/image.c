@@ -1,47 +1,14 @@
 #include "image.h"
 
 
-void defilter(uint8_t *outputBuffer, uint8_t *buffer, pngMetaData params)
+void defilter(uint8_t *outputBuffer, uint8_t *buffer, uint32_t height, uint32_t scanwidth, uint8_t bpp)
 {
 
-    int lines = params.height;
-    int bpp = params.bit_depth / 8;
-	
-	switch(params.color_type)
-	{
-		case 0:
-			// grayscale and no alpha channel. Do not need to modify bpp
-		break;
-
-		case 2:
-			// rgb triplet
-			bpp *= 3;
-		break;
-		case 3:
-			// using a pallete. This is currently not supported
-		break;
-		
-		case 4:
-			// grayscale with an alpha channel
-			bpp *= 2;
-		break;
-		case 6:
-			// rgb with and alpha channel
-			bpp *= 4;
-		break;
-
-		default:
-                        LOG(glog, ERROR, "Invalid PNG color type\n");
-                break;
-	}
-
-    int scanwidth = params.width * bpp + 1;
+    int lines = height;
     int width = scanwidth - 1;
     int offset = 0;
     int outputOffset = 0;
     
-    LOG(glog, DEBUG, "BPP: %d\n", bpp);    
-   
     uint8_t *prevScanline = malloc(width);
     uint8_t *scanline = malloc(width);
         
@@ -88,6 +55,42 @@ void defilter(uint8_t *outputBuffer, uint8_t *buffer, pngMetaData params)
     free(prevScanline);
 }
 
+uint8_t get_bytes_per_pixel(pngMetaData params)
+{
+
+    uint bpp = params.bit_depth / 8;
+	
+    switch(params.color_type)
+    {
+            case 0:
+                    // grayscale and no alpha channel. Do not need to modify bpp
+            break;
+
+            case 2:
+                    // rgb triplet
+                    bpp *= 3;
+            break;
+            case 3:
+                    // using a pallete. This is currently not supported
+            break;
+            
+            case 4:
+                    // grayscale with an alpha channel
+                    bpp *= 2;
+            break;
+            case 6:
+                    // rgb with and alpha channel
+                    bpp *= 4;
+            break;
+
+            default:
+                    LOG(glog, ERROR, "Invalid PNG color type\n");
+                break;
+    }
+    
+    return bpp;
+}
+
 uint8_t read_filter_byte(uint8_t *buffer)
 {
     return *buffer;
@@ -99,6 +102,110 @@ void read_scanline(uint8_t *buffer, uint32_t length, uint8_t *scanline)
     {
         scanline[i] = buffer[i];
     }
+}
+
+void defilter_adam7(uint8_t *outputBuffer, uint8_t *buffer, pngMetaData params, int pass)
+{
+    if(pass > 6)
+    {
+        LOG(glog, ERROR, "Only 7 passes allowed\n");
+        return; 
+    }
+
+    int bpp = get_bytes_per_pixel(params);
+    int offset = 0;
+    int outputOffset = 0;
+    int outputSize = params.width * params.height * bpp;
+    
+    struct pass_data
+    {
+        int x_start;
+        int x_offset;
+        int y_start;
+        int y_offset;
+    };
+  
+    const struct pass_data adam7[7] = {
+    [0] = {
+        .x_start = 0,
+        .x_offset = 8,
+        .y_start = 0,
+        .y_offset = 8,
+    },
+    [1] = {
+        .x_start = 4,
+        .x_offset = 8,
+        .y_start = 0,
+        .y_offset = 8,
+    },
+    [2] = 
+    {
+        .x_start = 0,
+        .x_offset = 4,
+        .y_start = 4,
+        .y_offset = 8,
+    },
+    [3] = 
+    {
+        .x_start = 2,
+        .x_offset = 4,
+        .y_start = 0,
+        .y_offset = 4,
+    },
+    [4] = 
+    {
+        .x_start = 0,
+        .x_offset = 2,
+        .y_start = 2,
+        .y_offset = 4,
+    },
+    [5] = 
+    {
+        .x_start = 1,
+        .x_offset = 2,
+        .y_start = 0,
+        .y_offset = 2,
+    },
+    [6] = 
+    {
+        .x_start = 0,
+        .x_offset = 1,
+        .y_start = 1,
+        .y_offset = 2,
+     },
+    };
+
+    int scan_width =  1 + ((params.width * bpp) / adam7[pass].x_offset);
+    int scan_lines  = params.height / adam7[pass].y_offset; 
+    int pass_size  = scan_lines * scan_width;
+
+    LOG(glog, DEBUG, "scan width: %d scan lines: %d total size: %d\n", scan_width, scan_lines,
+    pass_size);
+
+    int pixel_width = (scan_width - 1) / bpp;
+    int width = scan_width - 1;
+    int height = scan_lines;
+
+    LOG(glog, DEBUG, "Width: %d Height: %d\n", width, height);
+
+    uint8_t *pass_buffer = malloc(pass_size);
+    defilter(pass_buffer, buffer, scan_lines, scan_width, bpp);  
+   
+    // assemble adam7 image
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j+=bpp)
+        {
+            // this is the output image use the actual width not the reduced one
+            outputOffset = params.width * bpp * (adam7[pass].y_start + adam7[pass].y_offset * i) + (adam7[pass].x_start + adam7[pass].x_offset * j);
+            LOG(glog, DEBUG_3 + 1, "offset: %d\n", outputOffset); 
+            outputBuffer[outputOffset] =  pass_buffer[i * width +  j];
+            outputBuffer[outputOffset + 1] =  pass_buffer[i * width +  j +1];
+            outputBuffer[outputOffset + 2] =  pass_buffer[i * width +  j + 2];
+        }
+    }
+
+    free(pass_buffer);
 }
 
 void filter_none(uint8_t *outputBuffer, uint32_t length, uint8_t *scanline)

@@ -33,22 +33,6 @@
 // Log level 7 - 254 can be used freely
 #define DEBUG_ALL 255 // max level
 
-// This is where you set the log level
-#ifndef LOGGING_LEVEL
-#define LOGGING_LEVEL DEBUG_3
-//#define LOGGING_LEVEL INFO 
-#endif
-
-// Enable logging globally
-#ifndef LOGGING_ENABLED
-#define LOGGING_ENABLED true 
-#endif
-
-// LOGGING_ENABLED and LOGGING_LEVEL can also be defined in the makefile
-// TODO turn this into a real library with timestamps, file logging and ANSI color codes
-
-#define LOG_FILE "/dev/stdout"
-
 // Data Structures
 
 typedef void (*func)(uint8_t level, const char *message, ...);
@@ -61,6 +45,7 @@ typedef struct _logger
     bool enabled;    
 } logger;
 
+// The global logger object
 logger *glog;
 
 // Public Functions

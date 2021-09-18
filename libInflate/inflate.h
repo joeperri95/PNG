@@ -10,6 +10,8 @@
 // Includes
 #include "bitstream.h"
 #include "huffman.h"
+#include "logging.h"
+#include <stdlib.h>
 
 // Constants
 

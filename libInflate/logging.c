@@ -32,9 +32,12 @@ void prefix(logger *logger_handle, uint8_t level)
         case INFO:
             fprintf(logger_handle->log_file, ANSI_COLOR_GREEN "INFO: " ANSI_COLOR_RESET);
         break;
+        case DEBUG:
+            fprintf(logger_handle->log_file, ANSI_COLOR_GREEN "DEBUG: " ANSI_COLOR_RESET);
+        break;
 
         default:
-            fprintf(logger_handle->log_file, ANSI_COLOR_MAGENTA "DEBUG %d: " ANSI_COLOR_RESET, level - 2);
+            fprintf(logger_handle->log_file, ANSI_COLOR_MAGENTA "DEBUG %d: " ANSI_COLOR_RESET, level - 3);
         break;
     }
 }

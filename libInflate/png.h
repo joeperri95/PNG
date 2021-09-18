@@ -82,7 +82,7 @@ pngMetaData process_PNG_header(uint8_t *buff);
 	Log ancillary chunk data for now.
 	How do I get the pngMetadata and the pallete?
 */
-void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outputLength, pngMetaData *pngData);
+void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outputLength, pngMetaData *pngData, pallete *plte);
 
 /* Read the 4 bytes for chunk length */
 uint32_t get_chunk_length(uint8_t *buff);
@@ -102,6 +102,9 @@ uint32_t get_CRC(uint8_t *buff);
 bool validate_CRC(uint8_t* buff, uint32_t length, uint32_t CRC);
 
 // Private Functions
+
+/* tranform pallete data into RGB triplets */
+void _decode_pallete(uint8_t *outputBuffer, uint8_t* inputBuffer, pngMetaData *params, pallete* plte);
 
 /* Functions for handling specific PNG chunks*/
 

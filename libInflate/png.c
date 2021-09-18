@@ -33,7 +33,7 @@ pngMetaData process_PNG_header(uint8_t *buffer)
 }
 
 
-void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outputLength, pngMetaData *pngData)
+void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outputLength, pngMetaData *pngData, pallete *plte)
 {
 
     bool png_quit = false;
@@ -42,13 +42,12 @@ void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outpu
     uint32_t offset = 0;
     uint32_t dataLength = 0;
     
-	uint8_t *chunkBuffer = (uint8_t *)malloc(sizeof(uint8_t *));
-	uint8_t *crcBuffer = (uint8_t *)malloc(sizeof(uint8_t *));
+    uint8_t *chunkBuffer = (uint8_t *)malloc(sizeof(uint8_t *));
+    uint8_t *crcBuffer = (uint8_t *)malloc(sizeof(uint8_t *));
     
     //uint8_t *IDATBuffer = (uint8_t *)malloc(sizeof(uint8_t *));
     
     char chunkType[5] = "";    
-    pallete plte;
 
     while(!png_quit){
 		
@@ -65,17 +64,18 @@ void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outpu
 		get_chunk_data(fileBuffer + offset, chunkLength, chunkBuffer);
 
         // Need to avoid all of these strncmp calls possibly using a hash function
-		if(strncmp(chunkType, "IHDR", 4) == 0){
-			*pngData = _process_IHDR(chunkBuffer, chunkLength);
-		}
-		else if(strncmp(chunkType, "IDAT", 4) == 0)
-		{
-			_process_IDAT(chunkBuffer, chunkLength, outputBuffer, outputLength);
-		}
+        // Also need to check order
+        if(strncmp(chunkType, "IHDR", 4) == 0){
+                *pngData = _process_IHDR(chunkBuffer, chunkLength);
+        }
+        else if(strncmp(chunkType, "IDAT", 4) == 0)
+        {
+                _process_IDAT(chunkBuffer, chunkLength, outputBuffer, outputLength);
+        }
         else if(strncmp(chunkType, "PLTE", 4) == 0)
-		{
-			plte = _process_PLTE(chunkBuffer, chunkLength);
-		}
+        {
+                *plte = _process_PLTE(chunkBuffer, chunkLength);
+        }
         else if(strncmp(chunkType, "sRGB", 4) == 0)
         {
             _process_sRGB(chunkBuffer, chunkLength);
@@ -165,10 +165,10 @@ bool validate_PNG(FILE *fp)
     uint8_t loop;
     uint8_t png_v[8] = {137, 80, 78, 71, 13, 10, 26, 10};
     bool res = true;
-
+    
     for (int i = 0; i < 8; i++)
     {
-        loop = fgetc(fp);
+        loop = fgetc(fp);        
 
         if (loop != png_v[i])
         {
@@ -256,6 +256,7 @@ pallete _process_PLTE(uint8_t *chunkBuffer, uint32_t chunkLength)
 
     for(int i = 0; i < 256; i++)
     {
+        LOG(glog, DEBUG, "Pallete entry: %d R: %d G: %d B: %d\n", i, plte.buffer[i].R, plte.buffer[i].G, plte.buffer[i].B);
         plte.buffer[i].R = chunkBuffer[3 * i];
         plte.buffer[i].G = chunkBuffer[3 * i + 1];
         plte.buffer[i].B = chunkBuffer[3 * i + 2];

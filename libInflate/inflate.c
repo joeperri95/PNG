@@ -142,11 +142,7 @@ void compressed_fixed(bitstream_t *input, unsigned char *outputStream, uint32_t 
             length = literal_offset_table[lcode] + lextra; 
 
             dcode = search(input, distanceHuffman);
-           
-            int btr =  distance_extra_bit_table[dcode];
-
             dextra = read_bits_little_endian(input, distance_extra_bit_table[dcode]);
-            
             distance = distance_offset_table[dcode] + dextra;
 
             LOG(glog, DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
@@ -179,7 +175,7 @@ void compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_
     const uint32_t distance_offset_table[30]    =  {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577};
     uint32_t codes[19]                          =  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
-    uint32_t *z_codes;
+    
     uint32_t z_num_codes_literal = 257 + read_bits_little_endian(input, 5);
     uint32_t z_num_codes_distance = 1 + read_bits_little_endian(input, 5);
     uint32_t z_num_codes_huffman = 4 + read_bits_little_endian(input, 4);
@@ -208,8 +204,8 @@ void compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_
     uint8_t extra = 0;
     uint32_t index = 0;	
 
-    z_codes = (uint32_t *)malloc((z_num_codes_distance + z_num_codes_literal) * sizeof(uint32_t));	
-    
+    uint32_t *z_codes = (uint32_t *)malloc((z_num_codes_distance + z_num_codes_literal) * sizeof(uint32_t));	    
+
     while(index < z_num_codes_literal + z_num_codes_distance)
     {
         code = search(input, huffmantree);
@@ -254,7 +250,8 @@ void compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_
     
     node *len_huffman = construct_huffman(z_codes, z_num_codes_literal , 16);    
     node *len_distance = construct_huffman(z_codes + z_num_codes_literal, z_num_codes_distance, 16);
-
+    free(z_codes);    
+    
     int newcode = 0;            
 
     while (newcode != 256)
@@ -269,7 +266,7 @@ void compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_
         else if (newcode < 256)
         {
             outputStream[(*outputLength)++] = newcode;
-            LOG(glog, DEBUG_3, "%d %d %c lit\n",*outputLength, newcode, newcode );
+            LOG(glog, DEBUG_3, "%d %d %c literal\n",*outputLength, newcode, newcode );
         }
         else if (newcode > 285)
         {
@@ -287,18 +284,16 @@ void compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_
             dcode = search(input, len_distance);
             dextra = read_bits_little_endian(input, distance_extra_bit_table[dcode]);
             distance = distance_offset_table[dcode] + dextra;
-            
-            if(dcode >= 29){
+                        
             LOG(glog, DEBUG_3,"dcode %d Going back: %d + %d.lcode %d Copying: %d + %d\n", dcode, distance_offset_table[dcode],
             dextra,lcode,  literal_offset_table[lcode], lextra );
-}
+
             if(distance > *outputLength){
                 LOG(glog, ERROR, "Distance code too large\n"); 
             }
 
             for(int i=0; i < length; i++)
-            {
-                if(dcode >= 29)
+            {                
                 LOG(glog, DEBUG_3, "%d %d %c\n",*outputLength, *outputLength - distance,
                 outputStream[*outputLength - distance]);
                 outputStream[*outputLength] = outputStream[*outputLength - distance];
@@ -307,10 +302,11 @@ void compressed_dynamic(bitstream_t *input, unsigned char* outputStream, uint32_
         }
     }
 
-    free(z_codes);
-    free_huffman(len_huffman);
-    free_huffman(len_distance);
+    
+    free_huffman(len_huffman);    
+    free_huffman(len_distance);    
     free_huffman(huffmantree);
+    LOG(glog, DEBUG_3, "Done dynamic compression\n");    
 
 }
 
