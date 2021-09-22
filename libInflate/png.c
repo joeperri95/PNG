@@ -74,7 +74,7 @@ void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outpu
         }
         else if(strncmp(chunkType, "PLTE", 4) == 0)
         {
-                *plte = _process_PLTE(chunkBuffer, chunkLength);
+                _process_PLTE(chunkBuffer, chunkLength, plte);
         }
         else if(strncmp(chunkType, "sRGB", 4) == 0)
         {
@@ -236,6 +236,70 @@ bool validate_CRC(uint8_t* buffer, uint32_t length, uint32_t CRC)
 
 }
 
+uint8_t get_bytes_per_pixel(pngMetaData params)
+{
+
+    uint bpp = params.bit_depth / 8;
+	
+    switch(params.color_type)
+    {
+            case 0:
+                    // grayscale and no alpha channel. Do not need to modify bpp
+            break;
+
+            case 2:
+                    // rgb triplet
+                    bpp *= 3;
+            break;
+            case 3:
+                    // using a pallete. This is currently not supported
+                    return 3;
+            break;
+            
+            case 4:
+                    // grayscale with an alpha channel
+                    bpp *= 2;
+            break;
+            case 6:
+                    // rgb with and alpha channel
+                    bpp *= 4;
+            break;
+
+            default:
+                    LOG(glog, ERROR, "Invalid PNG color type\n");
+                break;
+    }
+    
+    return bpp;
+}
+
+void decode_pallete(uint8_t *outputBuffer, uint8_t* inputBuffer, pngMetaData params, pallete plte)
+{
+    // Always 3 bytes per pixel with a pallete
+    const int bpp = 3;
+
+    for(int i = 0; i < params.height; i++)
+    {
+        outputBuffer[i *  (1 + bpp * params.width)] =  inputBuffer[i * (1 + params.width)];  
+        LOG(glog, DEBUG_3 + 1, "Row: %d Offs: %d filter type %d\n", i, i * (1 + bpp *params.width) ,outputBuffer[i *  (1 + bpp * params.width)]);
+        
+        for(int j = 0; j < params.width; j++)
+        {
+            
+            int outputIndex = ((params.width) * bpp + 1) * i + 3 * j; 
+            int index = inputBuffer[(1 + params.width) * i + j + 1];
+            pallete_pixel p = plte.buffer[index];
+
+            outputBuffer[outputIndex + 1] = p.R;
+            outputBuffer[outputIndex + 2] = p.G;
+            outputBuffer[outputIndex + 3] = p.B;
+
+            LOG(glog, DEBUG_3 + 1, "Row: %d Column %d Offs %d Code 0x%x RGB %d %d %d\n", i, j, params.width * bpp * i + 3 *j + 1, index,  p.R, p.G, p.B);
+        }
+    }
+}
+
+
 // Private Functions
 
 pngMetaData _process_IHDR(uint8_t *chunkBuffer, uint32_t chunkLength)
@@ -250,19 +314,19 @@ void _process_IDAT(uint8_t *chunkBuffer, uint32_t chunkLength, uint8_t **outputB
 	memcpy(*outputBuffer + (*outputLength - chunkLength), chunkBuffer, chunkLength);
 }
 
-pallete _process_PLTE(uint8_t *chunkBuffer, uint32_t chunkLength)
+void  _process_PLTE(uint8_t *chunkBuffer, uint32_t chunkLength, pallete *plte)
 {
-    pallete plte;   
 
     for(int i = 0; i < 256; i++)
     {
-        LOG(glog, DEBUG, "Pallete entry: %d R: %d G: %d B: %d\n", i, plte.buffer[i].R, plte.buffer[i].G, plte.buffer[i].B);
-        plte.buffer[i].R = chunkBuffer[3 * i];
-        plte.buffer[i].G = chunkBuffer[3 * i + 1];
-        plte.buffer[i].B = chunkBuffer[3 * i + 2];
+        plte->buffer[i].R = chunkBuffer[3 * i];
+        plte->buffer[i].G = chunkBuffer[3 * i + 1];
+        plte->buffer[i].B = chunkBuffer[3 * i + 2];
+
+        LOG(glog, DEBUG, "Pallete entry: 0x%x R: %d G: %d B: %d\n", i, plte->buffer[i].R,
+        plte->buffer[i].G, plte->buffer[i].B);
     }
 
-    return plte;
 }
 
 // Ancillary chunks

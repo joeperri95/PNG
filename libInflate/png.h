@@ -84,6 +84,9 @@ pngMetaData process_PNG_header(uint8_t *buff);
 */
 void process_chunks(uint8_t *fileBuffer, uint8_t **outputBuffer, uint32_t *outputLength, pngMetaData *pngData, pallete *plte);
 
+/* get bpp using the png metadata parameters */
+uint8_t get_bytes_per_pixel(pngMetaData params);
+
 /* Read the 4 bytes for chunk length */
 uint32_t get_chunk_length(uint8_t *buff);
 
@@ -101,17 +104,18 @@ uint32_t get_CRC(uint8_t *buff);
 /* Perform CRC on chunk and compare with read value */
 bool validate_CRC(uint8_t* buff, uint32_t length, uint32_t CRC);
 
-// Private Functions
-
 /* tranform pallete data into RGB triplets */
-void _decode_pallete(uint8_t *outputBuffer, uint8_t* inputBuffer, pngMetaData *params, pallete* plte);
+void decode_pallete(uint8_t *outputBuffer, uint8_t* inputBuffer, pngMetaData params, pallete plte);
+
+
+// Private Functions
 
 /* Functions for handling specific PNG chunks*/
 
 /* Critical Chunks */
 pngMetaData _process_IHDR(uint8_t *chunkBuffer, uint32_t chunkLength);
 void _process_IDAT(uint8_t *chunkBuffer, uint32_t chunkLength, uint8_t **outputBuffer, uint32_t *outputLength);
-pallete _process_PLTE(uint8_t *chunkBuffer, uint32_t chunkLength);
+void _process_PLTE(uint8_t *chunkBuffer, uint32_t chunkLength, pallete *plte);
 
 /* Ancillary Chunks */
 void _process_iTXt(uint8_t *chunkBuffer, uint32_t chunkLength);

@@ -33,9 +33,6 @@ void read_scanline(uint8_t *buffer, uint32_t length, uint8_t *scanline);
 */
 void read_scanline_adam7();
 
-/* get bpp using the png metadata parameters */
-uint8_t get_bytes_per_pixel(pngMetaData params);
-
 /* Perform defiltering on the bytes of buffer and save the result to outputBuffer*/
 void defilter(uint8_t *outputBuffer, uint8_t *buffer, uint32_t height, uint32_t scanwidth, uint8_t bpp);
 
