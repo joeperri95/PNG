@@ -9,7 +9,7 @@ BUILDDIR = build
 APPSDIR = applications
 CFLAGS = -IlibInflate -Wall
 
-all: pre_build png gunzip lz77 crc32 adler32 post_build
+all: pre_build png gunzip lz77 deflate crc32 adler32 post_build
     @:
 
 pre_build:
@@ -33,6 +33,8 @@ gunzip: clean libs $(BUILDDIR)/gunzip.o
 lz77: clean libs $(BUILDDIR)/lz77.o
 	cd $(BUILDDIR) && $(CC) $(CFLAGS) lz77.o checksum.o fileutils.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o lz77 
 
+deflate: clean libs $(BUILDDIR)/deflate.o
+	cd $(BUILDDIR) && $(CC) $(CFLAGS) deflate.o checksum.o fileutils.o png.o bitstream.o huffman.o inflate.o logging.o gzip.o -o deflate 
 # just build all object files
 libs: clean 
 	cd libInflate && $(MAKE)
@@ -59,6 +61,9 @@ $(BUILDDIR)/gunzip.o: $(APPSDIR)/gunzip.c
 
 $(BUILDDIR)/lz77.o: $(APPSDIR)/lz77.c
 	$(CC) $(APPSDIR)/lz77.c -c -o $(BUILDDIR)/lz77.o -I. $(CFLAGS)
+
+$(BUILDDIR)/deflate.o: $(APPSDIR)/deflate.c
+	$(CC) $(APPSDIR)/deflate.c -c -o $(BUILDDIR)/deflate.o -I. $(CFLAGS)
 
 clean:
 	cd $(BUILDDIR) && rm -f *.o $(EXE) $(GUNZIP_EXE) $(TEST_EXE) $(CRC_EXE) $(ADLER_EXE)

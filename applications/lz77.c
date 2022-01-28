@@ -3,8 +3,7 @@
 #include "logging.h"
 #include "fileutils.h"
 
-#define WINDOW_SIZE 5
-#define SEARCH_SIZE 3
+#define WINDOW_SIZE 32767 
 
 typedef struct _match{
 	uint32_t distance;
@@ -73,7 +72,6 @@ int main(int argc, char *argv[])
 	match next;	
 
 	while(index < file_size){
-		LOG(glog, DEBUG_3, "search buffer %.*s window buffer %.*s\n", SEARCH_SIZE, file_buffer + index, index - window_start, file_buffer + window_start);			
 		next = find_matches(file_buffer, window_start, index);	
 		if(next.length > 0)
 		{
